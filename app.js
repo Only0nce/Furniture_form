@@ -4,7 +4,7 @@
 const CONFIG = {
   // Paste your deployed Google Apps Script Web App URL here.
   // Example: https://script.google.com/macros/s/AKfycbx.../exec
-  GOOGLE_APPS_SCRIPT_WEB_APP_URL: "",
+  GOOGLE_APPS_SCRIPT_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbyJEScf7LEHPo12hU_2TSsfYTeg19Hm3aUNWkG7Hm_Xswq_TTdLxO-tnPrTOaEDyAftBQ/exec",
   STORAGE_KEYS: {
     language: "furnitureLeadForm.language",
     theme: "furnitureLeadForm.theme",

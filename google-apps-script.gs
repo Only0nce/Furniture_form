@@ -2,7 +2,7 @@
 
 /* Configuration */
 // Paste your Google Spreadsheet ID here. It is the long ID in the Sheet URL.
-const SPREADSHEET_ID = "PASTE_YOUR_SPREADSHEET_ID_HERE";
+const SPREADSHEET_ID = "1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU";
 
 // Change this if your lead sheet tab uses a different name.
 const SHEET_NAME = "Leads";
