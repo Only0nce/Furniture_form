@@ -107,7 +107,7 @@ const translations = {
   th: {
     documentTitle: "แบบฟอร์มสอบถามข้อมูลเฟอร์นิเจอร์",
     skipToForm: "ข้ามไปยังแบบฟอร์ม",
-    brandName: "วอร์มโฮมเฟอร์นิเจอร์",
+    brandName: "K Dream design",
     languageLabel: "ภาษา",
     themeToggle: "โหมดมืด",
     themeToggleLight: "โหมดสว่าง",
@@ -155,7 +155,7 @@ const translations = {
     qrEyebrow: "พร้อมใช้งานผ่าน QR Code",
     qrTitle: "Deploy ครั้งเดียว แล้วให้ลูกค้าสแกนเพื่อกรอกข้อมูลได้ทันที",
     qrText: "นำเว็บไซต์นี้ไปโฮสต์ เชื่อมต่อ Google Apps Script Web App URL แล้วแปลงลิงก์เว็บไซต์เป็น QR Code สำหรับเคาน์เตอร์โชว์รูม แคตตาล็อก งานอีเวนต์ และทีมจัดส่ง",
-    footerText: "แบบฟอร์มสอบถามข้อมูลวอร์มโฮมเฟอร์นิเจอร์ ข้อมูลลูกค้าใช้เพื่อติดต่อกลับเกี่ยวกับสินค้าและบริการเฟอร์นิเจอร์เท่านั้น",
+    footerText: "แบบฟอร์มสอบถามข้อมูล K Dream design ข้อมูลลูกค้าใช้เพื่อติดต่อกลับเกี่ยวกับสินค้าและบริการเฟอร์นิเจอร์เท่านั้น",
     footerCta: "กลับไปที่แบบฟอร์ม",
     selectProductPlaceholder: "เลือกสินค้า",
     selectBudgetPlaceholder: "เลือกงบประมาณ",
