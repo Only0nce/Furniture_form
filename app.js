@@ -26,7 +26,7 @@ const translations = {
   en: {
     documentTitle: "Furniture Customer Inquiry",
     skipToForm: "Skip to form",
-    brandName: "Warm Home Furniture",
+    brandName: "K Dream design",
     languageLabel: "Language",
     themeToggle: "Dark mode",
     themeToggleLight: "Light mode",
@@ -74,7 +74,7 @@ const translations = {
     qrEyebrow: "QR-ready form",
     qrTitle: "Deploy once, then let customers scan and submit.",
     qrText: "Host this static website, connect the Google Apps Script Web App URL, and turn the deployed website link into a QR Code for showroom counters, catalogs, events, and delivery teams.",
-    footerText: "Warm Home Furniture customer inquiry form. Customer data is used only for follow-up about furniture products and services.",
+    footerText: "K Dream design customer inquiry form. Customer data is used only for follow-up about furniture products and services.",
     footerCta: "Back to form",
     selectProductPlaceholder: "Select a product",
     selectBudgetPlaceholder: "Select a budget",
