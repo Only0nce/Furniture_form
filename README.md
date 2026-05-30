@@ -1,188 +1,208 @@
 # Furniture Customer Lead Form Website
 
-A static customer inquiry website for a furniture business. Customers scan a QR Code, open the form on mobile, tablet, or desktop, and submit contact details into Google Sheets through a Google Apps Script Web App.
+A responsive customer inquiry form for a furniture business. Customers scan a QR Code, open the Netlify-hosted website, submit contact details, and a Netlify Function writes the lead to Google Sheets using the Google Sheets API.
 
 ## File Structure
 
 ```text
 .
-├── index.html
-├── style.css
-├── app.js
-├── google-apps-script.gs
+├── public/
+│   ├── index.html
+│   ├── style.css
+│   ├── app.js
+│   └── assets/
+│       ├── furniture-showroom-hero.png
+│       └── furniture-showroom-hero.webp
+├── netlify/
+│   └── functions/
+│       └── submit-lead.js
+├── netlify.toml
+├── package.json
 ├── README.md
-└── assets/
-    ├── furniture-showroom-hero.png
-    └── furniture-showroom-hero.webp
+└── .gitignore
 ```
 
 ## Purpose of Each File
 
-- `index.html`: Semantic page structure, header, hero, benefits, customer form, QR explanation, footer, language switcher, and theme toggle.
-- `style.css`: Responsive layout, light and dark theme variables, furniture-inspired styling, form states, and mobile/tablet/desktop media queries.
-- `app.js`: Language switching, theme persistence, form validation, loading/success/error states, duplicate-submit prevention, and Google Apps Script submission.
-- `google-apps-script.gs`: Google Apps Script backend that validates incoming JSON and appends each lead to Google Sheets.
-- `assets/furniture-showroom-hero.webp`: Optimized hero image used by modern browsers.
-- `assets/furniture-showroom-hero.png`: PNG fallback for the hero image.
+- `public/index.html`: Public page markup, language switcher, theme toggle, hero content, benefits, QR explanation, and customer form.
+- `public/style.css`: Responsive light/dark furniture-inspired UI styling.
+- `public/app.js`: Browser-safe form validation, language/theme persistence, payload creation, and submission to the Netlify Function.
+- `netlify/functions/submit-lead.js`: Server-side Netlify Function that validates the request and appends rows to Google Sheets.
+- `netlify.toml`: Safe Netlify build configuration.
+- `package.json`: Node dependency configuration for `googleapis`.
+- `.gitignore`: Prevents credentials, local environment files, Netlify output, and dependencies from being committed.
+
+## Frontend Setup
+
+Only files inside `public/` are served to website visitors. The frontend submits to this safe public endpoint:
+
+```javascript
+fetch("/.netlify/functions/submit-lead", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(payload)
+});
+```
+
+`public/app.js` must never contain Google Sheet IDs, service account emails, private keys, API keys, or database credentials.
+
+## Form Fields
+
+Required:
+
+- Name
+- Phone number
+- Consent checkbox
+
+Optional:
+
+- Email
+- Address
+- Interested product
+- Estimated budget
+- Additional message
+
+Removed fields:
+
+- Line ID
+- Facebook
+- Instagram
 
 ## Google Sheets Setup
 
 1. Create a new Google Sheet.
-2. Rename the first tab to `Leads`.
-3. Add this header row in row 1:
+2. Rename the tab to the same value you will set in `GOOGLE_SHEET_NAME`, for example `Leads`.
+3. Add this header row:
 
 ```text
-Timestamp | Language | Name | Email | Phone | Line | Instagram | Facebook | Address | Interested Product | Budget | Message | Consent | User Agent | Source
+Timestamp | Language | Name | Phone | Email | Address | Interested Product | Budget | Message | Consent | User Agent | Source
 ```
 
-The Apps Script also creates this header row automatically if the sheet is empty, but adding it manually makes testing easier.
+The Netlify Function maps submitted values to this column order in `createLeadRow()` inside `netlify/functions/submit-lead.js`.
 
-## Google Apps Script Setup
+## Google Cloud Service Account Setup
 
-1. In the Google Sheet, go to `Extensions > Apps Script`.
-2. Delete any starter code.
-3. Paste the full contents of `google-apps-script.gs`.
-4. In `google-apps-script.gs`, set:
+1. Open Google Cloud Console.
+2. Create or select a project.
+3. Enable the `Google Sheets API`.
+4. Go to `IAM & Admin > Service Accounts`.
+5. Create a service account.
+6. Create a JSON key for that service account.
+7. From the JSON file, copy:
+   - `client_email`
+   - `private_key`
 
-```javascript
-const SPREADSHEET_ID = "PASTE_YOUR_SPREADSHEET_ID_HERE";
-```
+Do not commit the JSON file. The repository ignores `service-account.json`.
 
-Use the long ID from your Google Sheet URL:
+## Google Sheets Permission Setup
+
+1. Open your Google Sheet.
+2. Click `Share`.
+3. Paste the service account `client_email`.
+4. Give it `Editor` access.
+5. Save.
+
+Without this share permission, the function can authenticate but cannot write rows.
+
+## Netlify Environment Variables
+
+In Netlify, open the site settings and add these environment variables:
 
 ```text
-https://docs.google.com/spreadsheets/d/SPREADSHEET_ID_HERE/edit
+GOOGLE_SHEET_ID=your_google_sheet_id
+GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
+GOOGLE_SHEET_NAME=Leads
 ```
 
-5. Confirm the sheet tab name:
+Notes:
 
-```javascript
-const SHEET_NAME = "Leads";
+- `GOOGLE_SHEET_ID` is the long ID in the Google Sheet URL.
+- `GOOGLE_PRIVATE_KEY` may contain escaped newline characters. The function converts `\n` back to real newline characters.
+- Do not store secrets in `netlify.toml`.
+- Do not commit `.env` files.
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
 ```
 
-## Deploy Google Apps Script as a Web App
+Install or use Netlify CLI:
 
-1. In Apps Script, click `Deploy > New deployment`.
-2. Choose `Web app`.
-3. Set `Execute as` to `Me`.
-4. Set `Who has access` to `Anyone` or `Anyone with the link`.
-5. Click `Deploy`.
-6. Authorize the script when prompted.
-7. Copy the Web App URL ending in `/exec`.
-
-## Connect the Website to Google Sheets
-
-Open `app.js` and paste the deployed Web App URL here:
-
-```javascript
-GOOGLE_APPS_SCRIPT_WEB_APP_URL: "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec",
+```bash
+npm install -g netlify-cli
 ```
 
-Do not paste Google account credentials or private keys into the frontend. The Web App URL is the only value the static website needs.
+Create a local `.env` file for testing only:
 
-## Static Website Deployment
+```text
+GOOGLE_SHEET_ID=your_google_sheet_id
+GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
+GOOGLE_SHEET_NAME=Leads
+```
 
-You can deploy the static files to GitHub Pages, Netlify, Vercel, or normal web hosting.
+Run locally:
 
-For GitHub Pages:
+```bash
+npm run dev
+```
 
-1. Push this folder to a GitHub repository.
-2. Go to `Settings > Pages`.
-3. Select the branch and root folder.
-4. Save and wait for the deployed URL.
+Netlify Dev serves the frontend and function together. The form should call:
 
-For Netlify:
+```text
+/.netlify/functions/submit-lead
+```
 
-1. Drag this project folder into Netlify Drop, or connect the GitHub repository.
-2. No build command is required.
-3. Publish directory is the project root.
+## Deployment
 
-For Vercel:
+1. Push the repository to GitHub.
+2. In Netlify, create a new site from the GitHub repository.
+3. Netlify reads `netlify.toml`:
 
-1. Import the GitHub repository.
-2. Keep framework as `Other`.
-3. No build command is required.
-4. Output directory is the project root.
+```toml
+[build]
+publish = "public"
+functions = "netlify/functions"
+```
 
-## Generate a QR Code
+4. Add the required environment variables in Netlify.
+5. Deploy the site.
 
-1. Deploy the website and copy the final public URL.
-2. Use a QR Code generator, browser extension, Canva, or your print design tool.
-3. Paste the public website URL.
-4. Test the QR Code with a mobile phone before printing.
+## Test Submission After Deploy
 
-The QR Code should point to the website URL, not the Google Apps Script URL.
+1. Open the deployed Netlify URL.
+2. Submit once with missing name or phone to confirm validation.
+3. Submit with name, phone, consent, and any optional fields.
+4. Confirm the button shows a loading state and duplicate submissions are blocked while sending.
+5. Confirm a success message appears.
+6. Open Google Sheets and verify a new row appears.
 
-## Test Form Submission
+If submission fails:
 
-1. Open the deployed website.
-2. Switch language and theme, then reload to confirm both settings persist.
-3. Submit once with missing required fields to confirm validation works.
-4. Submit with valid name, email, phone, address, and consent checked.
-5. Confirm the button shows a loading state and cannot be clicked twice while submitting.
-6. Confirm a success message appears.
-7. Open Google Sheets and verify a new row was added.
+- Confirm the Google Sheet is shared with the service account email.
+- Confirm all Netlify environment variables are set.
+- Confirm `GOOGLE_PRIVATE_KEY` includes newline escapes as `\n`.
+- Confirm the Google Sheets API is enabled for the Google Cloud project.
 
-If submission fails, check that:
+## QR Code Generation
 
-- `GOOGLE_APPS_SCRIPT_WEB_APP_URL` in `app.js` uses the deployed `/exec` URL.
-- `SPREADSHEET_ID` in `google-apps-script.gs` is correct.
-- Apps Script is deployed with access set to `Anyone` or `Anyone with the link`.
-- The `Leads` tab exists or Apps Script has permission to create it.
+1. Deploy the site on Netlify.
+2. Copy the public Netlify site URL.
+3. Generate a QR Code from the website URL, not the function URL.
+4. Test the QR Code on a mobile phone before printing.
 
-## Form Field Mapping
+## Security
 
-Frontend payload fields map to Google Sheets columns in this order:
-
-| Google Sheets Column | Frontend Payload Field |
-| --- | --- |
-| Timestamp | Added by Apps Script |
-| Language | `language` |
-| Name | `name` |
-| Email | `email` |
-| Phone | `phone` |
-| Line | `line` |
-| Instagram | `instagram` |
-| Facebook | `facebook` |
-| Address | `address` |
-| Interested Product | `interestedProduct` |
-| Budget | `budget` |
-| Message | `message` |
-| Consent | `consent` |
-| User Agent | `userAgent` |
-| Source | `source` |
-
-To change the column order later, update `COLUMN_MAPPING` and `createLeadRow()` in `google-apps-script.gs` together.
-
-## Customize Theme Colors
-
-Edit the CSS variables at the top of `style.css`.
-
-- Light mode colors are in `:root`.
-- Dark mode colors are in `html[data-theme="dark"]`.
-- Shared spacing, radius, shadows, font sizes, and transition tokens are also in `:root`.
-
-## Add More Languages
-
-In `app.js`:
-
-1. Add a new language object inside `translations`.
-2. Keep the same keys used by `en`, `th`, and `zh`.
-3. Add an `<option>` for the new language in `index.html`.
-
-The `data-i18n`, `data-i18n-placeholder`, and `data-i18n-alt` attributes automatically update visible text when a language is selected.
-
-## Add More Form Fields
-
-1. Add the field markup in `index.html`.
-2. Add labels and placeholders to every language in `translations`.
-3. Add the field name to `FIELD_CONFIG.optional` or `FIELD_CONFIG.required` in `app.js`.
-4. Add the field to `createPayload()` in `app.js`.
-5. Add a Google Sheets column to `COLUMN_MAPPING` in `google-apps-script.gs`.
-6. Add the value to `createLeadRow()` in `google-apps-script.gs`.
-
-## Privacy Notes
-
-- No secret keys or Google credentials are stored in the frontend.
-- Customer data should be used only for furniture inquiry follow-up.
-- The required consent checkbox must stay enabled for production use.
+- Frontend JavaScript can always be viewed in the browser.
+- Secrets must never be placed in `public/app.js`.
+- Netlify Functions run server-side and can safely read environment variables.
+- Backend files must stay outside `public/`.
+- Google credentials must be stored in Netlify Environment Variables.
+- If this GitHub repository is public, backend source code may still be visible, but secrets remain protected because credentials are not committed.
+- `.env`, `.env.*`, `service-account.json`, private keys, `node_modules/`, and `.netlify/` are ignored by git.

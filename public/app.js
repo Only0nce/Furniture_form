@@ -2,9 +2,9 @@
 
 /* Config section */
 const CONFIG = {
-  // Paste your deployed Google Apps Script Web App URL here.
-  // Example: https://script.google.com/macros/s/AKfycbx.../exec
-  GOOGLE_APPS_SCRIPT_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbyJEScf7LEHPo12hU_2TSsfYTeg19Hm3aUNWkG7Hm_Xswq_TTdLxO-tnPrTOaEDyAftBQ/exec",
+  // Public Netlify Function route. Keep backend credentials inside Netlify
+  // Environment Variables, never in this browser-visible file.
+  SUBMIT_ENDPOINT: "/.netlify/functions/submit-lead",
   STORAGE_KEYS: {
     language: "furnitureLeadForm.language",
     theme: "furnitureLeadForm.theme",
@@ -13,11 +13,10 @@ const CONFIG = {
   DEFAULT_THEME: "light",
 };
 
-// Field mapping is kept in one place so future fields can be added without
-// rewriting payload creation or frontend validation.
+// Field configuration keeps validation and payload creation easy to update.
 const FIELD_CONFIG = {
-  required: ["name", "email", "phone", "address"],
-  optional: ["lineId", "instagram", "facebook", "interestedProduct", "budget", "message"],
+  required: ["name", "phone"],
+  optional: ["email", "address", "interestedProduct", "budget", "message"],
 };
 
 /* Translation data */
@@ -42,19 +41,13 @@ const translations = {
     benefitDeliveryText: "Ask about delivery, installation, and follow-up service for your order.",
     formEyebrow: "Customer details",
     formTitle: "Tell us what you need",
-    formIntro: "Fields marked with * are required. We only use your details to follow up on this furniture inquiry.",
+    formIntro: "Name, phone number, and consent are required. Email and address are optional.",
     nameLabel: "Name",
     namePlaceholder: "Your full name",
     emailLabel: "Email",
     emailPlaceholder: "name@example.com",
     phoneLabel: "Phone number",
     phonePlaceholder: "08X XXX XXXX",
-    lineLabel: "Line ID",
-    linePlaceholder: "Optional",
-    instagramLabel: "Instagram",
-    instagramPlaceholder: "@username",
-    facebookLabel: "Facebook",
-    facebookPlaceholder: "Profile or page name",
     addressLabel: "Address",
     addressPlaceholder: "Delivery address or project location",
     productLabel: "Interested product",
@@ -66,14 +59,13 @@ const translations = {
     submitButton: "Send inquiry",
     loadingMessage: "Sending your inquiry...",
     successMessage: "Thank you. Your inquiry has been sent and our team will contact you soon.",
-    errorMessage: "We could not send the form. Please try again or contact our team directly.",
-    configurationError: "Google Apps Script Web App URL is not configured yet.",
+    errorMessage: "Unable to save submission. Please try again.",
     brandEyebrow: "Personalized support",
     brandTitle: "From first measurement to final placement.",
     brandText: "Whether you need a sofa, dining table, wardrobe, cabinet, shelf, decor piece, or a custom-built solution, our team will help you move from idea to practical next step.",
     qrEyebrow: "QR-ready form",
     qrTitle: "Deploy once, then let customers scan and submit.",
-    qrText: "Host this static website, connect the Google Apps Script Web App URL, and turn the deployed website link into a QR Code for showroom counters, catalogs, events, and delivery teams.",
+    qrText: "Deploy this website on Netlify, connect the server-side function to Google Sheets, and turn the deployed website link into a QR Code for showroom counters, catalogs, events, and delivery teams.",
     footerText: "K Dream design customer inquiry form. Customer data is used only for follow-up about furniture products and services.",
     footerCta: "Back to form",
     selectProductPlaceholder: "Select a product",
@@ -123,19 +115,13 @@ const translations = {
     benefitDeliveryText: "สอบถามการจัดส่ง ติดตั้ง และบริการหลังการขายสำหรับคำสั่งซื้อของคุณ",
     formEyebrow: "ข้อมูลลูกค้า",
     formTitle: "แจ้งสิ่งที่คุณต้องการ",
-    formIntro: "ช่องที่มี * จำเป็นต้องกรอก เราใช้ข้อมูลของคุณเพื่อติดต่อกลับเกี่ยวกับคำถามเรื่องเฟอร์นิเจอร์เท่านั้น",
+    formIntro: "ต้องกรอกชื่อ เบอร์โทรศัพท์ และยืนยันความยินยอม ส่วนอีเมลและที่อยู่ไม่บังคับ",
     nameLabel: "ชื่อ",
     namePlaceholder: "ชื่อและนามสกุล",
     emailLabel: "อีเมล",
     emailPlaceholder: "name@example.com",
     phoneLabel: "เบอร์โทรศัพท์",
     phonePlaceholder: "08X XXX XXXX",
-    lineLabel: "ไลน์ไอดี",
-    linePlaceholder: "ไม่บังคับ",
-    instagramLabel: "Instagram",
-    instagramPlaceholder: "@username",
-    facebookLabel: "Facebook",
-    facebookPlaceholder: "ชื่อโปรไฟล์หรือเพจ",
     addressLabel: "ที่อยู่",
     addressPlaceholder: "ที่อยู่สำหรับจัดส่งหรือสถานที่ติดตั้ง",
     productLabel: "สินค้าที่สนใจ",
@@ -147,14 +133,13 @@ const translations = {
     submitButton: "ส่งข้อมูล",
     loadingMessage: "กำลังส่งข้อมูลของคุณ...",
     successMessage: "ขอบคุณ ข้อมูลของคุณถูกส่งแล้ว ทีมงานจะติดต่อกลับเร็ว ๆ นี้",
-    errorMessage: "ไม่สามารถส่งแบบฟอร์มได้ กรุณาลองอีกครั้งหรือติดต่อทีมงานโดยตรง",
-    configurationError: "ยังไม่ได้ตั้งค่า Google Apps Script Web App URL",
+    errorMessage: "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง",
     brandEyebrow: "บริการที่เหมาะกับคุณ",
     brandTitle: "ตั้งแต่วัดพื้นที่ครั้งแรกจนถึงจัดวางหน้างาน",
     brandText: "ไม่ว่าคุณกำลังมองหาโซฟา โต๊ะอาหาร ตู้เสื้อผ้า ตู้เก็บของ ชั้นวาง ของตกแต่ง หรืองานสั่งทำ ทีมงานของเราจะช่วยเปลี่ยนไอเดียให้เป็นขั้นตอนถัดไปที่ชัดเจน",
     qrEyebrow: "พร้อมใช้งานผ่าน QR Code",
     qrTitle: "Deploy ครั้งเดียว แล้วให้ลูกค้าสแกนเพื่อกรอกข้อมูลได้ทันที",
-    qrText: "นำเว็บไซต์นี้ไปโฮสต์ เชื่อมต่อ Google Apps Script Web App URL แล้วแปลงลิงก์เว็บไซต์เป็น QR Code สำหรับเคาน์เตอร์โชว์รูม แคตตาล็อก งานอีเวนต์ และทีมจัดส่ง",
+    qrText: "นำเว็บไซต์นี้ไป deploy บน Netlify เชื่อมต่อ server-side function เข้ากับ Google Sheets แล้วแปลงลิงก์เว็บไซต์เป็น QR Code สำหรับเคาน์เตอร์โชว์รูม แคตตาล็อก งานอีเวนต์ และทีมจัดส่ง",
     footerText: "แบบฟอร์มสอบถามข้อมูล K Dream design ข้อมูลลูกค้าใช้เพื่อติดต่อกลับเกี่ยวกับสินค้าและบริการเฟอร์นิเจอร์เท่านั้น",
     footerCta: "กลับไปที่แบบฟอร์ม",
     selectProductPlaceholder: "เลือกสินค้า",
@@ -188,7 +173,7 @@ const translations = {
   zh: {
     documentTitle: "家具客户咨询表",
     skipToForm: "跳至表单",
-    brandName: "暖居家具",
+    brandName: "K Dream design",
     languageLabel: "语言",
     themeToggle: "深色模式",
     themeToggleLight: "浅色模式",
@@ -204,19 +189,13 @@ const translations = {
     benefitDeliveryText: "可咨询订单配送、安装和后续服务。",
     formEyebrow: "客户资料",
     formTitle: "告诉我们你的需求",
-    formIntro: "标有 * 的字段为必填。我们只会使用你的资料跟进本次家具咨询。",
+    formIntro: "姓名、电话号码和同意确认为必填。电子邮件和地址为选填。",
     nameLabel: "姓名",
     namePlaceholder: "你的全名",
     emailLabel: "电子邮件",
     emailPlaceholder: "name@example.com",
     phoneLabel: "电话号码",
     phonePlaceholder: "08X XXX XXXX",
-    lineLabel: "Line ID",
-    linePlaceholder: "选填",
-    instagramLabel: "Instagram",
-    instagramPlaceholder: "@username",
-    facebookLabel: "Facebook",
-    facebookPlaceholder: "个人主页或页面名称",
     addressLabel: "地址",
     addressPlaceholder: "配送地址或项目地点",
     productLabel: "感兴趣的产品",
@@ -228,15 +207,14 @@ const translations = {
     submitButton: "发送咨询",
     loadingMessage: "正在发送你的咨询...",
     successMessage: "谢谢。你的咨询已发送，我们的团队会尽快联系你。",
-    errorMessage: "表单发送失败。请重试或直接联系我们的团队。",
-    configurationError: "尚未配置 Google Apps Script Web App URL。",
+    errorMessage: "无法保存提交内容。请重试。",
     brandEyebrow: "个性化支持",
     brandTitle: "从第一次测量到最终摆放。",
     brandText: "无论你需要沙发、餐桌、衣柜、柜子、置物架、装饰品，还是定制家具方案，我们的团队都会帮助你把想法推进到清晰的下一步。",
     qrEyebrow: "支持 QR Code 使用",
     qrTitle: "部署一次，即可让客户扫码提交。",
-    qrText: "托管此静态网站，连接 Google Apps Script Web App URL，然后把部署后的网站链接生成 QR Code，可用于展厅柜台、目录、活动和配送团队。",
-    footerText: "暖居家具客户咨询表。客户资料仅用于跟进家具产品和服务咨询。",
+    qrText: "将此网站部署到 Netlify，通过服务端函数连接 Google Sheets，然后把部署后的网站链接生成 QR Code，可用于展厅柜台、目录、活动和配送团队。",
+    footerText: "K Dream design 客户咨询表。客户资料仅用于跟进家具产品和服务咨询。",
     footerCta: "返回表单",
     selectProductPlaceholder: "选择产品",
     selectBudgetPlaceholder: "选择预算",
@@ -483,11 +461,8 @@ function createPayload() {
   return {
     language: currentLanguage,
     name: cleanValue(formData.get("name")),
-    email: cleanValue(formData.get("email")),
     phone: cleanValue(formData.get("phone")),
-    line: cleanValue(formData.get("lineId")),
-    instagram: cleanValue(formData.get("instagram")),
-    facebook: cleanValue(formData.get("facebook")),
+    email: cleanValue(formData.get("email")),
     address: cleanValue(formData.get("address")),
     interestedProduct: cleanValue(formData.get("interestedProduct")),
     budget: cleanValue(formData.get("budget")),
@@ -502,23 +477,23 @@ function cleanValue(value) {
   return String(value || "").trim();
 }
 
-/* Google Sheets submission */
-async function submitToGoogleSheets(payload) {
-  if (!CONFIG.GOOGLE_APPS_SCRIPT_WEB_APP_URL) {
-    throw new Error(t("configurationError"));
-  }
-
-  const response = await fetch(CONFIG.GOOGLE_APPS_SCRIPT_WEB_APP_URL, {
+/* Netlify Function submission */
+async function submitLead(payload) {
+  const response = await fetch(CONFIG.SUBMIT_ENDPOINT, {
     method: "POST",
     headers: {
-      // text/plain keeps the request simple for Google Apps Script Web Apps.
-      "Content-Type": "text/plain;charset=utf-8",
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
-    redirect: "follow",
   });
 
-  const result = await response.json();
+  let result = {};
+  try {
+    result = await response.json();
+  } catch (error) {
+    result = {};
+  }
+
   if (!response.ok || !result.success) {
     throw new Error(result.message || t("errorMessage"));
   }
@@ -568,7 +543,7 @@ async function handleFormSubmit(event) {
   setFormStatus(t("loadingMessage"), "");
 
   try {
-    await submitToGoogleSheets(payload);
+    await submitLead(payload);
     setFormStatus(t("successMessage"), "success");
     resetFormAfterSuccess();
   } catch (error) {
@@ -588,14 +563,20 @@ function attachEventListeners() {
   dom.themeToggle.addEventListener("click", toggleTheme);
   dom.form.addEventListener("submit", handleFormSubmit);
 
-  dom.form.addEventListener("input", (event) => {
-    if (event.target.classList.contains("is-invalid")) {
-      event.target.classList.remove("is-invalid");
-      event.target.removeAttribute("aria-invalid");
-      const errorElement = document.getElementById(`${event.target.id}-error`);
-      if (errorElement) {
-        errorElement.textContent = "";
-      }
-    }
-  });
+  dom.form.addEventListener("input", clearFieldErrorOnChange);
+  dom.form.addEventListener("change", clearFieldErrorOnChange);
+}
+
+function clearFieldErrorOnChange(event) {
+  if (!event.target.classList.contains("is-invalid")) {
+    return;
+  }
+
+  event.target.classList.remove("is-invalid");
+  event.target.removeAttribute("aria-invalid");
+
+  const errorElement = document.getElementById(`${event.target.id}-error`);
+  if (errorElement) {
+    errorElement.textContent = "";
+  }
 }
