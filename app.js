@@ -1,0 +1,601 @@
+"use strict";
+
+/* Config section */
+const CONFIG = {
+  // Paste your deployed Google Apps Script Web App URL here.
+  // Example: https://script.google.com/macros/s/AKfycbx.../exec
+  GOOGLE_APPS_SCRIPT_WEB_APP_URL: "",
+  STORAGE_KEYS: {
+    language: "furnitureLeadForm.language",
+    theme: "furnitureLeadForm.theme",
+  },
+  DEFAULT_LANGUAGE: "en",
+  DEFAULT_THEME: "light",
+};
+
+// Field mapping is kept in one place so future fields can be added without
+// rewriting payload creation or frontend validation.
+const FIELD_CONFIG = {
+  required: ["name", "email", "phone", "address"],
+  optional: ["lineId", "instagram", "facebook", "interestedProduct", "budget", "message"],
+};
+
+/* Translation data */
+// Add future languages by creating a new language key with the same structure.
+const translations = {
+  en: {
+    documentTitle: "Furniture Customer Inquiry",
+    skipToForm: "Skip to form",
+    brandName: "Warm Home Furniture",
+    languageLabel: "Language",
+    themeToggle: "Dark mode",
+    themeToggleLight: "Light mode",
+    eyebrow: "Furniture consultation request",
+    heroTitle: "Design a warmer, better-fitted home with our furniture team.",
+    heroSubtitle: "Share your contact details and the furniture you are interested in. Our team will contact you with product guidance, custom options, and delivery support.",
+    heroImageAlt: "Warm modern furniture showroom with sofa, wood table, shelves, and home decor",
+    benefitConsultTitle: "Free consultation",
+    benefitConsultText: "Get help choosing furniture that fits your room, style, and budget.",
+    benefitCustomTitle: "Custom furniture",
+    benefitCustomText: "Request custom sizes, materials, colors, and room-specific solutions.",
+    benefitDeliveryTitle: "Delivery support",
+    benefitDeliveryText: "Ask about delivery, installation, and follow-up service for your order.",
+    formEyebrow: "Customer details",
+    formTitle: "Tell us what you need",
+    formIntro: "Fields marked with * are required. We only use your details to follow up on this furniture inquiry.",
+    nameLabel: "Name",
+    namePlaceholder: "Your full name",
+    emailLabel: "Email",
+    emailPlaceholder: "name@example.com",
+    phoneLabel: "Phone number",
+    phonePlaceholder: "08X XXX XXXX",
+    lineLabel: "Line ID",
+    linePlaceholder: "Optional",
+    instagramLabel: "Instagram",
+    instagramPlaceholder: "@username",
+    facebookLabel: "Facebook",
+    facebookPlaceholder: "Profile or page name",
+    addressLabel: "Address",
+    addressPlaceholder: "Delivery address or project location",
+    productLabel: "Interested product",
+    budgetLabel: "Estimated budget",
+    messageLabel: "Additional message",
+    messagePlaceholder: "Tell us about sizes, colors, materials, or preferred contact time",
+    consentText: "I agree to be contacted about products and services related to this furniture inquiry.",
+    privacyNote: "Your information is used only for customer contact and furniture inquiry follow-up.",
+    submitButton: "Send inquiry",
+    loadingMessage: "Sending your inquiry...",
+    successMessage: "Thank you. Your inquiry has been sent and our team will contact you soon.",
+    errorMessage: "We could not send the form. Please try again or contact our team directly.",
+    configurationError: "Google Apps Script Web App URL is not configured yet.",
+    brandEyebrow: "Personalized support",
+    brandTitle: "From first measurement to final placement.",
+    brandText: "Whether you need a sofa, dining table, wardrobe, cabinet, shelf, decor piece, or a custom-built solution, our team will help you move from idea to practical next step.",
+    qrEyebrow: "QR-ready form",
+    qrTitle: "Deploy once, then let customers scan and submit.",
+    qrText: "Host this static website, connect the Google Apps Script Web App URL, and turn the deployed website link into a QR Code for showroom counters, catalogs, events, and delivery teams.",
+    footerText: "Warm Home Furniture customer inquiry form. Customer data is used only for follow-up about furniture products and services.",
+    footerCta: "Back to form",
+    selectProductPlaceholder: "Select a product",
+    selectBudgetPlaceholder: "Select a budget",
+    products: {
+      sofa: "Sofa",
+      chair: "Chair",
+      table: "Table",
+      bed: "Bed",
+      wardrobe: "Wardrobe",
+      cabinet: "Cabinet",
+      shelf: "Shelf",
+      decor: "Home decoration",
+      custom: "Custom furniture",
+      other: "Other",
+    },
+    budgets: {
+      under20000: "Under 20,000 THB",
+      range20000to50000: "20,000 - 50,000 THB",
+      range50000to100000: "50,000 - 100,000 THB",
+      over100000: "Over 100,000 THB",
+      discuss: "Need consultation",
+    },
+    validation: {
+      required: "This field is required.",
+      email: "Please enter a valid email address.",
+      phone: "Please enter a valid phone number.",
+      consent: "Please confirm your consent before submitting.",
+    },
+  },
+  th: {
+    documentTitle: "แบบฟอร์มสอบถามข้อมูลเฟอร์นิเจอร์",
+    skipToForm: "ข้ามไปยังแบบฟอร์ม",
+    brandName: "วอร์มโฮมเฟอร์นิเจอร์",
+    languageLabel: "ภาษา",
+    themeToggle: "โหมดมืด",
+    themeToggleLight: "โหมดสว่าง",
+    eyebrow: "ขอรับคำปรึกษาเรื่องเฟอร์นิเจอร์",
+    heroTitle: "แต่งบ้านให้อบอุ่นและพอดีกับพื้นที่ ด้วยทีมเฟอร์นิเจอร์ของเรา",
+    heroSubtitle: "ฝากข้อมูลติดต่อและสินค้าที่สนใจ ทีมงานจะติดต่อกลับพร้อมคำแนะนำสินค้า ตัวเลือกสั่งทำ และบริการจัดส่ง",
+    heroImageAlt: "โชว์รูมเฟอร์นิเจอร์สไตล์โมเดิร์นที่มีโซฟา โต๊ะไม้ ชั้นวาง และของตกแต่งบ้าน",
+    benefitConsultTitle: "ให้คำปรึกษาฟรี",
+    benefitConsultText: "ช่วยเลือกเฟอร์นิเจอร์ให้เหมาะกับพื้นที่ สไตล์ และงบประมาณของคุณ",
+    benefitCustomTitle: "เฟอร์นิเจอร์สั่งทำ",
+    benefitCustomText: "สอบถามขนาด วัสดุ สี และงานออกแบบเฉพาะพื้นที่ได้",
+    benefitDeliveryTitle: "บริการจัดส่ง",
+    benefitDeliveryText: "สอบถามการจัดส่ง ติดตั้ง และบริการหลังการขายสำหรับคำสั่งซื้อของคุณ",
+    formEyebrow: "ข้อมูลลูกค้า",
+    formTitle: "แจ้งสิ่งที่คุณต้องการ",
+    formIntro: "ช่องที่มี * จำเป็นต้องกรอก เราใช้ข้อมูลของคุณเพื่อติดต่อกลับเกี่ยวกับคำถามเรื่องเฟอร์นิเจอร์เท่านั้น",
+    nameLabel: "ชื่อ",
+    namePlaceholder: "ชื่อและนามสกุล",
+    emailLabel: "อีเมล",
+    emailPlaceholder: "name@example.com",
+    phoneLabel: "เบอร์โทรศัพท์",
+    phonePlaceholder: "08X XXX XXXX",
+    lineLabel: "ไลน์ไอดี",
+    linePlaceholder: "ไม่บังคับ",
+    instagramLabel: "Instagram",
+    instagramPlaceholder: "@username",
+    facebookLabel: "Facebook",
+    facebookPlaceholder: "ชื่อโปรไฟล์หรือเพจ",
+    addressLabel: "ที่อยู่",
+    addressPlaceholder: "ที่อยู่สำหรับจัดส่งหรือสถานที่ติดตั้ง",
+    productLabel: "สินค้าที่สนใจ",
+    budgetLabel: "งบประมาณโดยประมาณ",
+    messageLabel: "ข้อความเพิ่มเติม",
+    messagePlaceholder: "แจ้งขนาด สี วัสดุ หรือเวลาที่สะดวกให้ติดต่อกลับ",
+    consentText: "ฉันยินยอมให้ติดต่อกลับเกี่ยวกับสินค้าและบริการที่เกี่ยวข้องกับคำถามเรื่องเฟอร์นิเจอร์นี้",
+    privacyNote: "ข้อมูลของคุณจะใช้เพื่อการติดต่อและติดตามคำถามเรื่องเฟอร์นิเจอร์เท่านั้น",
+    submitButton: "ส่งข้อมูล",
+    loadingMessage: "กำลังส่งข้อมูลของคุณ...",
+    successMessage: "ขอบคุณ ข้อมูลของคุณถูกส่งแล้ว ทีมงานจะติดต่อกลับเร็ว ๆ นี้",
+    errorMessage: "ไม่สามารถส่งแบบฟอร์มได้ กรุณาลองอีกครั้งหรือติดต่อทีมงานโดยตรง",
+    configurationError: "ยังไม่ได้ตั้งค่า Google Apps Script Web App URL",
+    brandEyebrow: "บริการที่เหมาะกับคุณ",
+    brandTitle: "ตั้งแต่วัดพื้นที่ครั้งแรกจนถึงจัดวางหน้างาน",
+    brandText: "ไม่ว่าคุณกำลังมองหาโซฟา โต๊ะอาหาร ตู้เสื้อผ้า ตู้เก็บของ ชั้นวาง ของตกแต่ง หรืองานสั่งทำ ทีมงานของเราจะช่วยเปลี่ยนไอเดียให้เป็นขั้นตอนถัดไปที่ชัดเจน",
+    qrEyebrow: "พร้อมใช้งานผ่าน QR Code",
+    qrTitle: "Deploy ครั้งเดียว แล้วให้ลูกค้าสแกนเพื่อกรอกข้อมูลได้ทันที",
+    qrText: "นำเว็บไซต์นี้ไปโฮสต์ เชื่อมต่อ Google Apps Script Web App URL แล้วแปลงลิงก์เว็บไซต์เป็น QR Code สำหรับเคาน์เตอร์โชว์รูม แคตตาล็อก งานอีเวนต์ และทีมจัดส่ง",
+    footerText: "แบบฟอร์มสอบถามข้อมูลวอร์มโฮมเฟอร์นิเจอร์ ข้อมูลลูกค้าใช้เพื่อติดต่อกลับเกี่ยวกับสินค้าและบริการเฟอร์นิเจอร์เท่านั้น",
+    footerCta: "กลับไปที่แบบฟอร์ม",
+    selectProductPlaceholder: "เลือกสินค้า",
+    selectBudgetPlaceholder: "เลือกงบประมาณ",
+    products: {
+      sofa: "โซฟา",
+      chair: "เก้าอี้",
+      table: "โต๊ะ",
+      bed: "เตียง",
+      wardrobe: "ตู้เสื้อผ้า",
+      cabinet: "ตู้เก็บของ",
+      shelf: "ชั้นวาง",
+      decor: "ของตกแต่งบ้าน",
+      custom: "เฟอร์นิเจอร์สั่งทำ",
+      other: "อื่น ๆ",
+    },
+    budgets: {
+      under20000: "ต่ำกว่า 20,000 บาท",
+      range20000to50000: "20,000 - 50,000 บาท",
+      range50000to100000: "50,000 - 100,000 บาท",
+      over100000: "มากกว่า 100,000 บาท",
+      discuss: "ต้องการปรึกษางบประมาณ",
+    },
+    validation: {
+      required: "กรุณากรอกข้อมูลช่องนี้",
+      email: "กรุณากรอกอีเมลให้ถูกต้อง",
+      phone: "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง",
+      consent: "กรุณายืนยันความยินยอมก่อนส่งข้อมูล",
+    },
+  },
+  zh: {
+    documentTitle: "家具客户咨询表",
+    skipToForm: "跳至表单",
+    brandName: "暖居家具",
+    languageLabel: "语言",
+    themeToggle: "深色模式",
+    themeToggleLight: "浅色模式",
+    eyebrow: "家具咨询申请",
+    heroTitle: "让我们的家具团队为你打造更温暖、更合适的家",
+    heroSubtitle: "请留下联系方式和感兴趣的家具。我们的团队会联系你，提供产品建议、定制选择和配送支持。",
+    heroImageAlt: "温暖现代的家具展厅，包含沙发、木桌、置物架和家居装饰",
+    benefitConsultTitle: "免费咨询",
+    benefitConsultText: "帮助你根据空间、风格和预算选择合适的家具。",
+    benefitCustomTitle: "定制家具",
+    benefitCustomText: "可咨询定制尺寸、材质、颜色和空间解决方案。",
+    benefitDeliveryTitle: "配送支持",
+    benefitDeliveryText: "可咨询订单配送、安装和后续服务。",
+    formEyebrow: "客户资料",
+    formTitle: "告诉我们你的需求",
+    formIntro: "标有 * 的字段为必填。我们只会使用你的资料跟进本次家具咨询。",
+    nameLabel: "姓名",
+    namePlaceholder: "你的全名",
+    emailLabel: "电子邮件",
+    emailPlaceholder: "name@example.com",
+    phoneLabel: "电话号码",
+    phonePlaceholder: "08X XXX XXXX",
+    lineLabel: "Line ID",
+    linePlaceholder: "选填",
+    instagramLabel: "Instagram",
+    instagramPlaceholder: "@username",
+    facebookLabel: "Facebook",
+    facebookPlaceholder: "个人主页或页面名称",
+    addressLabel: "地址",
+    addressPlaceholder: "配送地址或项目地点",
+    productLabel: "感兴趣的产品",
+    budgetLabel: "预计预算",
+    messageLabel: "补充信息",
+    messagePlaceholder: "请告诉我们尺寸、颜色、材质或方便联系的时间",
+    consentText: "我同意接收与本次家具咨询相关的产品和服务联系。",
+    privacyNote: "你的资料仅用于客户联系和家具咨询跟进。",
+    submitButton: "发送咨询",
+    loadingMessage: "正在发送你的咨询...",
+    successMessage: "谢谢。你的咨询已发送，我们的团队会尽快联系你。",
+    errorMessage: "表单发送失败。请重试或直接联系我们的团队。",
+    configurationError: "尚未配置 Google Apps Script Web App URL。",
+    brandEyebrow: "个性化支持",
+    brandTitle: "从第一次测量到最终摆放。",
+    brandText: "无论你需要沙发、餐桌、衣柜、柜子、置物架、装饰品，还是定制家具方案，我们的团队都会帮助你把想法推进到清晰的下一步。",
+    qrEyebrow: "支持 QR Code 使用",
+    qrTitle: "部署一次，即可让客户扫码提交。",
+    qrText: "托管此静态网站，连接 Google Apps Script Web App URL，然后把部署后的网站链接生成 QR Code，可用于展厅柜台、目录、活动和配送团队。",
+    footerText: "暖居家具客户咨询表。客户资料仅用于跟进家具产品和服务咨询。",
+    footerCta: "返回表单",
+    selectProductPlaceholder: "选择产品",
+    selectBudgetPlaceholder: "选择预算",
+    products: {
+      sofa: "沙发",
+      chair: "椅子",
+      table: "桌子",
+      bed: "床",
+      wardrobe: "衣柜",
+      cabinet: "柜子",
+      shelf: "置物架",
+      decor: "家居装饰",
+      custom: "定制家具",
+      other: "其他",
+    },
+    budgets: {
+      under20000: "20,000 泰铢以下",
+      range20000to50000: "20,000 - 50,000 泰铢",
+      range50000to100000: "50,000 - 100,000 泰铢",
+      over100000: "100,000 泰铢以上",
+      discuss: "需要预算咨询",
+    },
+    validation: {
+      required: "此字段为必填。",
+      email: "请输入有效的电子邮件地址。",
+      phone: "请输入有效的电话号码。",
+      consent: "提交前请确认你的同意。",
+    },
+  },
+};
+
+const productOptions = [
+  { value: "", labelKey: "selectProductPlaceholder" },
+  { value: "Sofa", labelKey: "products.sofa" },
+  { value: "Chair", labelKey: "products.chair" },
+  { value: "Table", labelKey: "products.table" },
+  { value: "Bed", labelKey: "products.bed" },
+  { value: "Wardrobe", labelKey: "products.wardrobe" },
+  { value: "Cabinet", labelKey: "products.cabinet" },
+  { value: "Shelf", labelKey: "products.shelf" },
+  { value: "Home decoration", labelKey: "products.decor" },
+  { value: "Custom furniture", labelKey: "products.custom" },
+  { value: "Other", labelKey: "products.other" },
+];
+
+const budgetOptions = [
+  { value: "", labelKey: "selectBudgetPlaceholder" },
+  { value: "Under 20,000 THB", labelKey: "budgets.under20000" },
+  { value: "20,000 - 50,000 THB", labelKey: "budgets.range20000to50000" },
+  { value: "50,000 - 100,000 THB", labelKey: "budgets.range50000to100000" },
+  { value: "Over 100,000 THB", labelKey: "budgets.over100000" },
+  { value: "Need consultation", labelKey: "budgets.discuss" },
+];
+
+/* DOM element references */
+const dom = {
+  root: document.documentElement,
+  languageSelect: document.getElementById("language-select"),
+  themeToggle: document.getElementById("theme-toggle"),
+  form: document.getElementById("lead-form"),
+  submitButton: document.getElementById("submit-button"),
+  formStatus: document.getElementById("form-status"),
+  productSelect: document.getElementById("interestedProduct"),
+  budgetSelect: document.getElementById("budget"),
+};
+
+let currentLanguage = CONFIG.DEFAULT_LANGUAGE;
+let isSubmitting = false;
+
+/* Initialization */
+document.addEventListener("DOMContentLoaded", initApp);
+
+function initApp() {
+  currentLanguage = getStoredLanguage();
+  const savedTheme = getStoredTheme();
+
+  dom.languageSelect.value = currentLanguage;
+  applyLanguage(currentLanguage);
+  applyTheme(savedTheme);
+  attachEventListeners();
+}
+
+/* Language handling */
+function getStoredLanguage() {
+  const savedLanguage = localStorage.getItem(CONFIG.STORAGE_KEYS.language);
+  return translations[savedLanguage] ? savedLanguage : CONFIG.DEFAULT_LANGUAGE;
+}
+
+function applyLanguage(language) {
+  currentLanguage = translations[language] ? language : CONFIG.DEFAULT_LANGUAGE;
+  localStorage.setItem(CONFIG.STORAGE_KEYS.language, currentLanguage);
+  dom.root.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
+  document.title = t("documentTitle");
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll("[data-i18n-alt]").forEach((element) => {
+    element.alt = t(element.dataset.i18nAlt);
+  });
+
+  populateSelect(dom.productSelect, productOptions);
+  populateSelect(dom.budgetSelect, budgetOptions);
+  refreshThemeToggleText();
+  clearValidationErrors();
+}
+
+function populateSelect(selectElement, options) {
+  const selectedValue = selectElement.value;
+  selectElement.innerHTML = "";
+
+  options.forEach((optionData) => {
+    const option = document.createElement("option");
+    option.value = optionData.value;
+    option.textContent = t(optionData.labelKey);
+    selectElement.append(option);
+  });
+
+  selectElement.value = options.some((option) => option.value === selectedValue) ? selectedValue : "";
+}
+
+function t(key) {
+  return getNestedValue(translations[currentLanguage], key) || getNestedValue(translations[CONFIG.DEFAULT_LANGUAGE], key) || key;
+}
+
+function getNestedValue(source, path) {
+  return path.split(".").reduce((value, key) => (value && value[key] !== undefined ? value[key] : undefined), source);
+}
+
+/* Theme handling */
+function getStoredTheme() {
+  const savedTheme = localStorage.getItem(CONFIG.STORAGE_KEYS.theme);
+  if (savedTheme === "light" || savedTheme === "dark") {
+    return savedTheme;
+  }
+  return CONFIG.DEFAULT_THEME;
+}
+
+function applyTheme(theme) {
+  const nextTheme = theme === "dark" ? "dark" : "light";
+  dom.root.dataset.theme = nextTheme;
+  localStorage.setItem(CONFIG.STORAGE_KEYS.theme, nextTheme);
+  dom.themeToggle.setAttribute("aria-pressed", String(nextTheme === "dark"));
+  refreshThemeToggleText();
+}
+
+function refreshThemeToggleText() {
+  const label = dom.themeToggle.querySelector("[data-i18n='themeToggle']");
+  const isDark = dom.root.dataset.theme === "dark";
+  label.textContent = isDark ? t("themeToggleLight") : t("themeToggle");
+}
+
+function toggleTheme() {
+  applyTheme(dom.root.dataset.theme === "dark" ? "light" : "dark");
+}
+
+/* Form validation */
+function validateForm() {
+  clearValidationErrors();
+
+  const formData = new FormData(dom.form);
+  let isValid = true;
+
+  FIELD_CONFIG.required.forEach((fieldName) => {
+    const field = dom.form.elements[fieldName];
+    if (!String(formData.get(fieldName) || "").trim()) {
+      setFieldError(field, t("validation.required"));
+      isValid = false;
+    }
+  });
+
+  const emailField = dom.form.elements.email;
+  const emailValue = String(formData.get("email") || "").trim();
+  if (emailValue && !isValidEmail(emailValue)) {
+    setFieldError(emailField, t("validation.email"));
+    isValid = false;
+  }
+
+  const phoneField = dom.form.elements.phone;
+  const phoneValue = String(formData.get("phone") || "").trim();
+  if (phoneValue && !isValidPhone(phoneValue)) {
+    setFieldError(phoneField, t("validation.phone"));
+    isValid = false;
+  }
+
+  const consentField = dom.form.elements.consent;
+  if (!consentField.checked) {
+    setFieldError(consentField, t("validation.consent"));
+    isValid = false;
+  }
+
+  if (!isValid) {
+    focusFirstInvalidField();
+  }
+
+  return isValid;
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+}
+
+function isValidPhone(value) {
+  return /^[0-9+\-()\s]{7,20}$/.test(value);
+}
+
+function setFieldError(field, message) {
+  field.classList.add("is-invalid");
+  field.setAttribute("aria-invalid", "true");
+
+  const errorElement = document.getElementById(`${field.id}-error`);
+  if (errorElement) {
+    errorElement.textContent = message;
+  }
+}
+
+function clearValidationErrors() {
+  dom.form.querySelectorAll(".is-invalid").forEach((field) => {
+    field.classList.remove("is-invalid");
+    field.removeAttribute("aria-invalid");
+  });
+
+  dom.form.querySelectorAll(".field-error").forEach((errorElement) => {
+    errorElement.textContent = "";
+  });
+}
+
+function focusFirstInvalidField() {
+  const invalidField = dom.form.querySelector(".is-invalid");
+  if (invalidField) {
+    invalidField.focus({ preventScroll: false });
+  }
+}
+
+/* Payload creation */
+function createPayload() {
+  const formData = new FormData(dom.form);
+
+  return {
+    language: currentLanguage,
+    name: cleanValue(formData.get("name")),
+    email: cleanValue(formData.get("email")),
+    phone: cleanValue(formData.get("phone")),
+    line: cleanValue(formData.get("lineId")),
+    instagram: cleanValue(formData.get("instagram")),
+    facebook: cleanValue(formData.get("facebook")),
+    address: cleanValue(formData.get("address")),
+    interestedProduct: cleanValue(formData.get("interestedProduct")),
+    budget: cleanValue(formData.get("budget")),
+    message: cleanValue(formData.get("message")),
+    consent: dom.form.elements.consent.checked,
+    userAgent: navigator.userAgent,
+    source: window.location.href,
+  };
+}
+
+function cleanValue(value) {
+  return String(value || "").trim();
+}
+
+/* Google Sheets submission */
+async function submitToGoogleSheets(payload) {
+  if (!CONFIG.GOOGLE_APPS_SCRIPT_WEB_APP_URL) {
+    throw new Error(t("configurationError"));
+  }
+
+  const response = await fetch(CONFIG.GOOGLE_APPS_SCRIPT_WEB_APP_URL, {
+    method: "POST",
+    headers: {
+      // text/plain keeps the request simple for Google Apps Script Web Apps.
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify(payload),
+    redirect: "follow",
+  });
+
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || t("errorMessage"));
+  }
+
+  return result;
+}
+
+/* UI state helpers */
+function setSubmittingState(nextIsSubmitting) {
+  isSubmitting = nextIsSubmitting;
+  dom.submitButton.disabled = nextIsSubmitting;
+  dom.submitButton.classList.toggle("is-loading", nextIsSubmitting);
+  dom.submitButton.querySelector(".button-label").textContent = nextIsSubmitting ? t("loadingMessage") : t("submitButton");
+}
+
+function setFormStatus(message, type) {
+  dom.formStatus.textContent = message;
+  dom.formStatus.className = "form-status";
+
+  if (type) {
+    dom.formStatus.classList.add(`is-${type}`);
+  }
+}
+
+function resetFormAfterSuccess() {
+  dom.form.reset();
+  populateSelect(dom.productSelect, productOptions);
+  populateSelect(dom.budgetSelect, budgetOptions);
+}
+
+/* Success / error handling */
+async function handleFormSubmit(event) {
+  event.preventDefault();
+
+  if (isSubmitting) {
+    return;
+  }
+
+  setFormStatus("", "");
+
+  if (!validateForm()) {
+    return;
+  }
+
+  const payload = createPayload();
+  setSubmittingState(true);
+  setFormStatus(t("loadingMessage"), "");
+
+  try {
+    await submitToGoogleSheets(payload);
+    setFormStatus(t("successMessage"), "success");
+    resetFormAfterSuccess();
+  } catch (error) {
+    setFormStatus(error.message || t("errorMessage"), "error");
+  } finally {
+    setSubmittingState(false);
+  }
+}
+
+/* Event listeners */
+function attachEventListeners() {
+  dom.languageSelect.addEventListener("change", (event) => {
+    applyLanguage(event.target.value);
+    setFormStatus("", "");
+  });
+
+  dom.themeToggle.addEventListener("click", toggleTheme);
+  dom.form.addEventListener("submit", handleFormSubmit);
+
+  dom.form.addEventListener("input", (event) => {
+    if (event.target.classList.contains("is-invalid")) {
+      event.target.classList.remove("is-invalid");
+      event.target.removeAttribute("aria-invalid");
+      const errorElement = document.getElementById(`${event.target.id}-error`);
+      if (errorElement) {
+        errorElement.textContent = "";
+      }
+    }
+  });
+}

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Customer inquiry form for furniture consultation, custom furniture, and delivery support.">
+  <title>Furniture Customer Inquiry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#lead-form" data-i18n="skipToForm">Skip to form</a>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand-mark" href="#top" aria-label="Furniture customer inquiry home">
+        <span class="brand-symbol" aria-hidden="true"></span>
+        <span data-i18n="brandName">Warm Home Furniture</span>
+      </a>
+
+      <nav class="header-actions" aria-label="Page preferences">
+        <label class="language-control" for="language-select">
+          <span class="sr-only" data-i18n="languageLabel">Language</span>
+          <select id="language-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="th">ไทย</option>
+            <option value="zh">简体中文</option>
+          </select>
+        </label>
+
+        <button class="theme-toggle" type="button" id="theme-toggle" aria-pressed="false">
+          <span class="theme-toggle-icon" aria-hidden="true"></span>
+          <span data-i18n="themeToggle">Dark mode</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero Section and Customer Form -->
+    <section class="hero-section">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <p class="eyebrow" data-i18n="eyebrow">Furniture consultation request</p>
+          <h1 data-i18n="heroTitle">Design a warmer, better-fitted home with our furniture team.</h1>
+          <p class="hero-copy" data-i18n="heroSubtitle">
+            Share your contact details and the furniture you are interested in. Our team will contact you with product guidance, custom options, and delivery support.
+          </p>
+
+          <div class="hero-visual" aria-label="Modern furniture showroom">
+            <picture>
+              <source srcset="assets/furniture-showroom-hero.webp" type="image/webp">
+              <img src="assets/furniture-showroom-hero.png" alt="Warm modern furniture showroom with sofa, wood table, shelves, and home decor" data-i18n-alt="heroImageAlt">
+            </picture>
+          </div>
+
+          <div class="benefit-list" aria-label="Service benefits">
+            <article class="benefit-item">
+              <span class="line-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img"><path d="M4 12h16M7 8h10M8 16h8"></path></svg>
+              </span>
+              <div>
+                <h2 data-i18n="benefitConsultTitle">Free consultation</h2>
+                <p data-i18n="benefitConsultText">Get help choosing furniture that fits your room, style, and budget.</p>
+              </div>
+            </article>
+
+            <article class="benefit-item">
+              <span class="line-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img"><path d="M5 19V8l7-4 7 4v11M9 19v-7h6v7"></path></svg>
+              </span>
+              <div>
+                <h2 data-i18n="benefitCustomTitle">Custom furniture</h2>
+                <p data-i18n="benefitCustomText">Request custom sizes, materials, colors, and room-specific solutions.</p>
+              </div>
+            </article>
+
+            <article class="benefit-item">
+              <span class="line-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img"><path d="M3 7h12v10H3zM15 11h3l3 3v3h-6zM7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path></svg>
+              </span>
+              <div>
+                <h2 data-i18n="benefitDeliveryTitle">Delivery support</h2>
+                <p data-i18n="benefitDeliveryText">Ask about delivery, installation, and follow-up service for your order.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Customer Form -->
+        <section class="form-card" aria-labelledby="form-title">
+          <div class="form-card-header">
+            <p class="eyebrow" data-i18n="formEyebrow">Customer details</p>
+            <h2 id="form-title" data-i18n="formTitle">Tell us what you need</h2>
+            <p data-i18n="formIntro">Fields marked with * are required. We only use your details to follow up on this furniture inquiry.</p>
+          </div>
+
+          <form id="lead-form" class="lead-form" novalidate>
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="name"><span data-i18n="nameLabel">Name</span> <span aria-hidden="true">*</span></label>
+                <input id="name" name="name" type="text" autocomplete="name" required data-i18n-placeholder="namePlaceholder" placeholder="Your full name">
+                <p class="field-error" id="name-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="email"><span data-i18n="emailLabel">Email</span> <span aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" required data-i18n-placeholder="emailPlaceholder" placeholder="name@example.com">
+                <p class="field-error" id="email-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="phone"><span data-i18n="phoneLabel">Phone number</span> <span aria-hidden="true">*</span></label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required data-i18n-placeholder="phonePlaceholder" placeholder="08X XXX XXXX">
+                <p class="field-error" id="phone-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="lineId" data-i18n="lineLabel">Line ID</label>
+                <input id="lineId" name="lineId" type="text" autocomplete="off" data-i18n-placeholder="linePlaceholder" placeholder="Optional">
+                <p class="field-error" id="lineId-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="instagram" data-i18n="instagramLabel">Instagram</label>
+                <input id="instagram" name="instagram" type="text" autocomplete="off" data-i18n-placeholder="instagramPlaceholder" placeholder="@username">
+                <p class="field-error" id="instagram-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="facebook" data-i18n="facebookLabel">Facebook</label>
+                <input id="facebook" name="facebook" type="text" autocomplete="off" data-i18n-placeholder="facebookPlaceholder" placeholder="Profile or page name">
+                <p class="field-error" id="facebook-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field form-field-wide">
+                <label for="address"><span data-i18n="addressLabel">Address</span> <span aria-hidden="true">*</span></label>
+                <textarea id="address" name="address" rows="3" autocomplete="street-address" required data-i18n-placeholder="addressPlaceholder" placeholder="Delivery address or project location"></textarea>
+                <p class="field-error" id="address-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="interestedProduct" data-i18n="productLabel">Interested product</label>
+                <select id="interestedProduct" name="interestedProduct"></select>
+                <p class="field-error" id="interestedProduct-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="budget" data-i18n="budgetLabel">Estimated budget</label>
+                <select id="budget" name="budget"></select>
+                <p class="field-error" id="budget-error" aria-live="polite"></p>
+              </div>
+
+              <div class="form-field form-field-wide">
+                <label for="message" data-i18n="messageLabel">Additional message</label>
+                <textarea id="message" name="message" rows="4" data-i18n-placeholder="messagePlaceholder" placeholder="Tell us about sizes, colors, materials, or preferred contact time"></textarea>
+                <p class="field-error" id="message-error" aria-live="polite"></p>
+              </div>
+            </div>
+
+            <div class="consent-box">
+              <label for="consent" class="checkbox-label">
+                <input id="consent" name="consent" type="checkbox" required>
+                <span data-i18n="consentText">I agree to be contacted about products and services related to this furniture inquiry.</span>
+              </label>
+              <p class="privacy-note" data-i18n="privacyNote">Your information is used only for customer contact and furniture inquiry follow-up.</p>
+              <p class="field-error" id="consent-error" aria-live="polite"></p>
+            </div>
+
+            <div class="form-actions">
+              <button class="submit-button" type="submit" id="submit-button">
+                <span class="button-label" data-i18n="submitButton">Send inquiry</span>
+                <span class="button-loader" aria-hidden="true"></span>
+              </button>
+              <p class="form-status" id="form-status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+      </div>
+    </section>
+
+    <!-- Brand Message Section -->
+    <section class="brand-message-section">
+      <div class="container brand-message-grid">
+        <div>
+          <p class="eyebrow" data-i18n="brandEyebrow">Personalized support</p>
+          <h2 data-i18n="brandTitle">From first measurement to final placement.</h2>
+        </div>
+        <p data-i18n="brandText">
+          Whether you need a sofa, dining table, wardrobe, cabinet, shelf, decor piece, or a custom-built solution, our team will help you move from idea to practical next step.
+        </p>
+      </div>
+    </section>
+
+    <!-- QR Code Explanation Section -->
+    <section class="qr-section">
+      <div class="container qr-grid">
+        <div class="qr-preview" aria-hidden="true">
+          <div class="qr-frame">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow" data-i18n="qrEyebrow">QR-ready form</p>
+          <h2 data-i18n="qrTitle">Deploy once, then let customers scan and submit.</h2>
+          <p data-i18n="qrText">
+            Host this static website, connect the Google Apps Script Web App URL, and turn the deployed website link into a QR Code for showroom counters, catalogs, events, and delivery teams.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p data-i18n="footerText">Warm Home Furniture customer inquiry form. Customer data is used only for follow-up about furniture products and services.</p>
+      <a href="#lead-form" data-i18n="footerCta">Back to form</a>
+    </div>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
