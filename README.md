@@ -24,7 +24,7 @@ A responsive customer inquiry form for a furniture business. Customers scan a QR
 
 ## Purpose of Each File
 
-- `public/index.html`: Public page markup, language switcher, theme toggle, hero content, benefits, QR explanation, and customer form.
+- `public/index.html`: Public page markup, language switcher, theme toggle, hero content, benefits, contact block, company footer, and customer form.
 - `public/style.css`: Responsive light/dark furniture-inspired UI styling.
 - `public/app.js`: Browser-safe form validation, language/theme persistence, payload creation, and submission to the Netlify Function.
 - `netlify/functions/submit-lead.js`: Server-side Netlify Function that validates the request and appends rows to Google Sheets.
@@ -47,6 +47,31 @@ fetch("/.netlify/functions/submit-lead", {
 ```
 
 `public/app.js` must never contain Google Sheet IDs, service account emails, private keys, API keys, or database credentials.
+
+## Company Information
+
+Thai display:
+
+```text
+Brand display name: เนสท์ โมเดิร์น ดีไซน์
+Legal company name: ห้างหุ้นส่วนจำกัด เนสท์ โมเดิร์น ดีไซน์ (สำนักงานใหญ่)
+English company name: Nest Modern Design Ltd., Part.
+Address: เลขที่ 22 หมู่ 6 ตำบลในเมือง อำเภอเมืองขอนแก่น จังหวัดขอนแก่น 40000
+Tax ID: 0-4035-68004-38-7
+Email: qu.acc66@gmail.com
+```
+
+English and Chinese display:
+
+```text
+Brand display name: Nest Modern Design Ltd., Part.
+Legal company name: Nest Modern Design Ltd., Part. (Head Office)
+Address: No. 22, Moo 6, Nai Mueang Subdistrict, Mueang Khon Kaen District, Khon Kaen Province 40000, Thailand
+Tax ID: 0-4035-68004-38-7
+Email: qu.acc66@gmail.com
+```
+
+The website renders company data from the `companyInfo` object in `public/app.js`. Update that object when company details change so the header, contact card, and footer stay consistent.
 
 ## Form Fields
 
@@ -192,10 +217,13 @@ If submission fails:
 
 ## QR Code Generation
 
+The customer-facing website must not show a visible QR Code section, QR Code mockup, or deployment explanation. QR Code instructions belong only in this README.
+
 1. Deploy the site on Netlify.
 2. Copy the public Netlify site URL.
 3. Generate a QR Code from the website URL, not the function URL.
-4. Test the QR Code on a mobile phone before printing.
+4. Customers can scan the generated QR Code to open the website and submit the form.
+5. Test the QR Code on a mobile phone before printing.
 
 ## Security
 

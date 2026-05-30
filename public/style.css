@@ -186,12 +186,13 @@ p {
 .hero-content,
 .form-card,
 .brand-message-grid > *,
-.qr-grid > * {
+.contact-grid > *,
+.footer-grid > * {
   min-width: 0;
 }
 
 .brand-message-section,
-.qr-section {
+.contact-section {
   padding: var(--space-12) 0;
 }
 
@@ -598,82 +599,172 @@ textarea:focus {
 }
 
 .brand-message-grid h2,
-.qr-grid h2 {
+.contact-grid h2 {
   margin-top: var(--space-2);
   font-size: var(--text-2xl);
   line-height: 1.15;
 }
 
 .brand-message-grid p:last-child,
-.qr-grid p:last-child {
+.contact-grid p:last-child {
   color: var(--color-muted);
   font-size: var(--text-lg);
 }
 
-/* QR Code section */
-.qr-section {
+/* Contact section */
+.contact-section {
   border-top: 1px solid color-mix(in srgb, var(--color-border), transparent 20%);
 }
 
-.qr-grid {
+.contact-grid {
   display: grid;
   align-items: center;
   gap: var(--space-6);
 }
 
-.qr-preview {
+.contact-card {
   display: grid;
-  place-items: center;
-}
-
-.qr-frame {
-  display: grid;
-  grid-template-columns: repeat(4, 28px);
-  grid-template-rows: repeat(3, 28px);
-  gap: 8px;
+  grid-template-columns: 48px 1fr;
+  align-items: center;
+  gap: var(--space-4);
   padding: var(--space-5);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-soft);
+  text-decoration: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
-.qr-frame span {
-  border-radius: 3px;
-  background: var(--color-text);
+.contact-card:hover,
+.contact-card:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
 }
 
-.qr-frame span:nth-child(2),
-.qr-frame span:nth-child(7),
-.qr-frame span:nth-child(9),
-.qr-frame span:nth-child(12) {
-  background: var(--color-accent);
+.contact-card:focus-visible {
+  outline: 0;
+}
+
+.contact-card strong,
+.contact-card small,
+.contact-label {
+  display: block;
+}
+
+.contact-card strong {
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.contact-card small,
+.contact-label {
+  color: var(--color-muted);
+}
+
+.contact-label {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 /* Footer */
 .site-footer {
-  padding: var(--space-8) 0;
+  padding: var(--space-10) 0;
   border-top: 1px solid color-mix(in srgb, var(--color-border), transparent 20%);
-  background: var(--color-text);
-  color: var(--color-bg-soft);
+  background: #241c18;
+  color: #fffaf3;
 }
 
-.footer-inner {
+.footer-grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
-.footer-inner p {
+.footer-brand {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.footer-brand .eyebrow {
+  color: var(--color-gold);
+}
+
+.footer-brand h2 {
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+
+.footer-brand p {
   max-width: 68ch;
-  color: color-mix(in srgb, var(--color-bg-soft), transparent 12%);
+  color: rgba(255, 250, 243, 0.78);
 }
 
-.footer-inner a {
+.footer-brand a,
+.company-card a {
   width: fit-content;
   color: #fffaf3;
   font-weight: 800;
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
+}
+
+.company-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--color-bg-soft), transparent 78%);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 250, 243, 0.06);
+  font-style: normal;
+}
+
+.company-card h3 {
+  margin: 0;
+  color: #fffaf3;
+  font-size: var(--text-lg);
+  line-height: 1.3;
+}
+
+.company-details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.company-details li {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: var(--space-3);
+  align-items: start;
+  color: rgba(255, 250, 243, 0.78);
+}
+
+.detail-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 250, 243, 0.1);
+  color: var(--color-gold);
+}
+
+.detail-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 /* Responsive media queries */
@@ -691,12 +782,9 @@ textarea:focus {
   }
 
   .brand-message-grid,
-  .qr-grid {
+  .contact-grid,
+  .footer-grid {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
-  }
-
-  .qr-preview {
-    justify-content: start;
   }
 }
 
@@ -765,9 +853,8 @@ textarea:focus {
     padding: var(--space-5);
   }
 
-  .qr-frame {
-    grid-template-columns: repeat(4, 22px);
-    grid-template-rows: repeat(3, 22px);
+  .contact-card {
+    grid-template-columns: 44px 1fr;
   }
 }
 

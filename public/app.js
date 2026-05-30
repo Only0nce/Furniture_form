@@ -19,13 +19,42 @@ const FIELD_CONFIG = {
   optional: ["email", "address", "interestedProduct", "budget", "message"],
 };
 
+/* Company information */
+// Edit company details here once. The UI renders these values in the header,
+// contact section, and footer so the information stays consistent.
+const companyInfo = {
+  th: {
+    brandName: "เนสท์ โมเดิร์น ดีไซน์",
+    legalName: "ห้างหุ้นส่วนจำกัด เนสท์ โมเดิร์น ดีไซน์ (สำนักงานใหญ่)",
+    companyName: "Nest Modern Design Ltd., Part.",
+    address: "เลขที่ 22 หมู่ 6 ตำบลในเมือง อำเภอเมืองขอนแก่น จังหวัดขอนแก่น 40000",
+    taxId: "0-4035-68004-38-7",
+    email: "qu.acc66@gmail.com",
+  },
+  en: {
+    brandName: "Nest Modern Design Ltd., Part.",
+    legalName: "Nest Modern Design Ltd., Part. (Head Office)",
+    companyName: "Nest Modern Design Ltd., Part.",
+    address: "No. 22, Moo 6, Nai Mueang Subdistrict, Mueang Khon Kaen District, Khon Kaen Province 40000, Thailand",
+    taxId: "0-4035-68004-38-7",
+    email: "qu.acc66@gmail.com",
+  },
+  zh: {
+    brandName: "Nest Modern Design Ltd., Part.",
+    legalName: "Nest Modern Design Ltd., Part. (Head Office)",
+    companyName: "Nest Modern Design Ltd., Part.",
+    address: "No. 22, Moo 6, Nai Mueang Subdistrict, Mueang Khon Kaen District, Khon Kaen Province 40000, Thailand",
+    taxId: "0-4035-68004-38-7",
+    email: "qu.acc66@gmail.com",
+  },
+};
+
 /* Translation data */
 // Add future languages by creating a new language key with the same structure.
 const translations = {
   en: {
     documentTitle: "Furniture Customer Inquiry",
     skipToForm: "Skip to form",
-    brandName: "K Dream design",
     languageLabel: "Language",
     themeToggle: "Dark mode",
     themeToggleLight: "Light mode",
@@ -63,11 +92,15 @@ const translations = {
     brandEyebrow: "Personalized support",
     brandTitle: "From first measurement to final placement.",
     brandText: "Whether you need a sofa, dining table, wardrobe, cabinet, shelf, decor piece, or a custom-built solution, our team will help you move from idea to practical next step.",
-    qrEyebrow: "QR-ready form",
-    qrTitle: "Deploy once, then let customers scan and submit.",
-    qrText: "Deploy this website on Netlify, connect the server-side function to Google Sheets, and turn the deployed website link into a QR Code for showroom counters, catalogs, events, and delivery teams.",
-    footerText: "K Dream design customer inquiry form. Customer data is used only for follow-up about furniture products and services.",
+    contactEyebrow: "Official contact",
+    contactTitle: "Contact our furniture team",
+    contactText: "For product questions, custom furniture details, or follow-up on this form, please use our official company email.",
+    emailContactLabel: "Email",
+    contactCardText: "Official company contact channel",
+    footerEyebrow: "Company information",
+    footerText: "Customer data is used only for furniture inquiry follow-up by our company team.",
     footerCta: "Back to form",
+    taxLabel: "Tax ID",
     selectProductPlaceholder: "Select a product",
     selectBudgetPlaceholder: "Select a budget",
     products: {
@@ -99,7 +132,6 @@ const translations = {
   th: {
     documentTitle: "แบบฟอร์มสอบถามข้อมูลเฟอร์นิเจอร์",
     skipToForm: "ข้ามไปยังแบบฟอร์ม",
-    brandName: "K Dream design",
     languageLabel: "ภาษา",
     themeToggle: "โหมดมืด",
     themeToggleLight: "โหมดสว่าง",
@@ -137,11 +169,15 @@ const translations = {
     brandEyebrow: "บริการที่เหมาะกับคุณ",
     brandTitle: "ตั้งแต่วัดพื้นที่ครั้งแรกจนถึงจัดวางหน้างาน",
     brandText: "ไม่ว่าคุณกำลังมองหาโซฟา โต๊ะอาหาร ตู้เสื้อผ้า ตู้เก็บของ ชั้นวาง ของตกแต่ง หรืองานสั่งทำ ทีมงานของเราจะช่วยเปลี่ยนไอเดียให้เป็นขั้นตอนถัดไปที่ชัดเจน",
-    qrEyebrow: "พร้อมใช้งานผ่าน QR Code",
-    qrTitle: "Deploy ครั้งเดียว แล้วให้ลูกค้าสแกนเพื่อกรอกข้อมูลได้ทันที",
-    qrText: "นำเว็บไซต์นี้ไป deploy บน Netlify เชื่อมต่อ server-side function เข้ากับ Google Sheets แล้วแปลงลิงก์เว็บไซต์เป็น QR Code สำหรับเคาน์เตอร์โชว์รูม แคตตาล็อก งานอีเวนต์ และทีมจัดส่ง",
-    footerText: "แบบฟอร์มสอบถามข้อมูล K Dream design ข้อมูลลูกค้าใช้เพื่อติดต่อกลับเกี่ยวกับสินค้าและบริการเฟอร์นิเจอร์เท่านั้น",
+    contactEyebrow: "ช่องทางติดต่ออย่างเป็นทางการ",
+    contactTitle: "ติดต่อทีมเฟอร์นิเจอร์ของเรา",
+    contactText: "สำหรับคำถามเกี่ยวกับสินค้า รายละเอียดงานสั่งทำ หรือการติดตามแบบฟอร์ม กรุณาติดต่อผ่านอีเมลบริษัทอย่างเป็นทางการ",
+    emailContactLabel: "อีเมล",
+    contactCardText: "ช่องทางติดต่อบริษัทอย่างเป็นทางการ",
+    footerEyebrow: "ข้อมูลบริษัท",
+    footerText: "ข้อมูลลูกค้าใช้เพื่อติดตามคำถามเรื่องเฟอร์นิเจอร์โดยทีมงานบริษัทเท่านั้น",
     footerCta: "กลับไปที่แบบฟอร์ม",
+    taxLabel: "เลขประจำตัวผู้เสียภาษี",
     selectProductPlaceholder: "เลือกสินค้า",
     selectBudgetPlaceholder: "เลือกงบประมาณ",
     products: {
@@ -173,7 +209,6 @@ const translations = {
   zh: {
     documentTitle: "家具客户咨询表",
     skipToForm: "跳至表单",
-    brandName: "K Dream design",
     languageLabel: "语言",
     themeToggle: "深色模式",
     themeToggleLight: "浅色模式",
@@ -211,11 +246,15 @@ const translations = {
     brandEyebrow: "个性化支持",
     brandTitle: "从第一次测量到最终摆放。",
     brandText: "无论你需要沙发、餐桌、衣柜、柜子、置物架、装饰品，还是定制家具方案，我们的团队都会帮助你把想法推进到清晰的下一步。",
-    qrEyebrow: "支持 QR Code 使用",
-    qrTitle: "部署一次，即可让客户扫码提交。",
-    qrText: "将此网站部署到 Netlify，通过服务端函数连接 Google Sheets，然后把部署后的网站链接生成 QR Code，可用于展厅柜台、目录、活动和配送团队。",
-    footerText: "K Dream design 客户咨询表。客户资料仅用于跟进家具产品和服务咨询。",
+    contactEyebrow: "官方联系方式",
+    contactTitle: "联系家具团队",
+    contactText: "如需咨询产品、定制家具细节或跟进此表单，请使用公司官方电子邮件。",
+    emailContactLabel: "电子邮件",
+    contactCardText: "公司官方联系渠道",
+    footerEyebrow: "公司信息",
+    footerText: "客户资料仅由公司团队用于家具咨询跟进。",
     footerCta: "返回表单",
+    taxLabel: "税号",
     selectProductPlaceholder: "选择产品",
     selectBudgetPlaceholder: "选择预算",
     products: {
@@ -307,7 +346,7 @@ function applyLanguage(language) {
   currentLanguage = translations[language] ? language : CONFIG.DEFAULT_LANGUAGE;
   localStorage.setItem(CONFIG.STORAGE_KEYS.language, currentLanguage);
   dom.root.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
-  document.title = t("documentTitle");
+  document.title = `${getCompanyInfo().brandName} | ${t("documentTitle")}`;
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     element.textContent = t(element.dataset.i18n);
@@ -321,10 +360,32 @@ function applyLanguage(language) {
     element.alt = t(element.dataset.i18nAlt);
   });
 
+  renderCompanyInfo();
   populateSelect(dom.productSelect, productOptions);
   populateSelect(dom.budgetSelect, budgetOptions);
   refreshThemeToggleText();
   clearValidationErrors();
+}
+
+function renderCompanyInfo() {
+  const info = getCompanyInfo();
+
+  document.querySelectorAll("[data-company]").forEach((element) => {
+    const key = element.dataset.company;
+    element.textContent = info[key] || "";
+  });
+
+  document.querySelectorAll("[data-company-email]").forEach((element) => {
+    element.textContent = info.email;
+  });
+
+  document.querySelectorAll("[data-company-email-link]").forEach((element) => {
+    element.href = `mailto:${info.email}`;
+  });
+}
+
+function getCompanyInfo() {
+  return companyInfo[currentLanguage] || companyInfo[CONFIG.DEFAULT_LANGUAGE];
 }
 
 function populateSelect(selectElement, options) {
