@@ -28,7 +28,7 @@ const companyInfo = {
     legalName: "ห้างหุ้นส่วนจำกัด เนสท์ โมเดิร์น ดีไซน์ (สำนักงานใหญ่)",
     companyName: "Nest Modern Design Ltd., Part.",
     address: "เลขที่ 22 หมู่ 6 ตำบลในเมือง อำเภอเมืองขอนแก่น จังหวัดขอนแก่น 40000",
-    taxId: "0-4035-68004-38-7",
+    taxId: "043004142, 0624134924",
     email: "qu.acc66@gmail.com",
   },
   en: {
@@ -36,7 +36,7 @@ const companyInfo = {
     legalName: "Nest Modern Design Ltd., Part. (Head Office)",
     companyName: "Nest Modern Design Ltd., Part.",
     address: "No. 22, Moo 6, Nai Mueang Subdistrict, Mueang Khon Kaen District, Khon Kaen Province 40000, Thailand",
-    taxId: "0-4035-68004-38-7",
+    taxId: "043004142, 0624134924",
     email: "qu.acc66@gmail.com",
   },
   zh: {
@@ -44,7 +44,7 @@ const companyInfo = {
     legalName: "Nest Modern Design Ltd., Part. (Head Office)",
     companyName: "Nest Modern Design Ltd., Part.",
     address: "No. 22, Moo 6, Nai Mueang Subdistrict, Mueang Khon Kaen District, Khon Kaen Province 40000, Thailand",
-    taxId: "0-4035-68004-38-7",
+    taxId: "043004142, 0624134924",
     email: "qu.acc66@gmail.com",
   },
 };
@@ -100,7 +100,7 @@ const translations = {
     footerEyebrow: "Company information",
     footerText: "Customer data is used only for furniture inquiry follow-up by our company team.",
     footerCta: "Back to form",
-    taxLabel: "Tax ID",
+    taxLabel: "Tel",
     selectProductPlaceholder: "Select a product",
     selectBudgetPlaceholder: "Select a budget",
     products: {
@@ -177,7 +177,7 @@ const translations = {
     footerEyebrow: "ข้อมูลบริษัท",
     footerText: "ข้อมูลลูกค้าใช้เพื่อติดตามคำถามเรื่องเฟอร์นิเจอร์โดยทีมงานบริษัทเท่านั้น",
     footerCta: "กลับไปที่แบบฟอร์ม",
-    taxLabel: "เลขประจำตัวผู้เสียภาษี",
+    taxLabel: "เบอร์โทรศัพท์",
     selectProductPlaceholder: "เลือกสินค้า",
     selectBudgetPlaceholder: "เลือกงบประมาณ",
     products: {
@@ -254,7 +254,7 @@ const translations = {
     footerEyebrow: "公司信息",
     footerText: "客户资料仅由公司团队用于家具咨询跟进。",
     footerCta: "返回表单",
-    taxLabel: "税号",
+    taxLabel: "电话号码",
     selectProductPlaceholder: "选择产品",
     selectBudgetPlaceholder: "选择预算",
     products: {

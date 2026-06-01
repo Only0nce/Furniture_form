@@ -11,11 +11,14 @@ A responsive customer inquiry form for a furniture business. Customers scan a QR
 │   ├── style.css
 │   ├── app.js
 │   └── assets/
+│       ├── logo.png
 │       ├── furniture-showroom-hero.png
 │       └── furniture-showroom-hero.webp
 ├── netlify/
 │   └── functions/
 │       └── submit-lead.js
+├── scripts/
+│   └── google-sheets-weekly-backup.gs
 ├── netlify.toml
 ├── package.json
 ├── README.md
@@ -28,6 +31,7 @@ A responsive customer inquiry form for a furniture business. Customers scan a QR
 - `public/style.css`: Responsive light/dark furniture-inspired UI styling.
 - `public/app.js`: Browser-safe form validation, language/theme persistence, payload creation, and submission to the Netlify Function.
 - `netlify/functions/submit-lead.js`: Server-side Netlify Function that validates the request and appends rows to Google Sheets.
+- `scripts/google-sheets-weekly-backup.gs`: Google Apps Script for weekly CSV backups from Google Sheets to Google Drive.
 - `netlify.toml`: Safe Netlify build configuration.
 - `package.json`: Node dependency configuration for `googleapis`.
 - `.gitignore`: Prevents credentials, local environment files, Netlify output, and dependencies from being committed.
@@ -47,6 +51,18 @@ fetch("/.netlify/functions/submit-lead", {
 ```
 
 `public/app.js` must never contain Google Sheet IDs, service account emails, private keys, API keys, or database credentials.
+
+Logo file path:
+
+```text
+public/assets/logo.png
+```
+
+Frontend logo path:
+
+```text
+assets/logo.png
+```
 
 ## Company Information
 
@@ -107,6 +123,25 @@ Timestamp | Language | Name | Phone | Email | Address | Interested Product | Bud
 
 The Netlify Function maps submitted values to this column order in `createLeadRow()` inside `netlify/functions/submit-lead.js`.
 
+Current Google Sheets columns:
+
+```text
+Timestamp
+Language
+Name
+Phone
+Email
+Address
+Interested Product
+Budget
+Message
+Consent
+User Agent
+Source
+```
+
+New rows do not include Line, Instagram, or Facebook fields. If an older Google Sheet still has those columns, back up the sheet before manually removing old columns; the site and function do not delete existing Sheet data automatically.
+
 ## Google Cloud Service Account Setup
 
 1. Open Google Cloud Console.
@@ -130,6 +165,60 @@ Do not commit the JSON file. The repository ignores `service-account.json`.
 5. Save.
 
 Without this share permission, the function can authenticate but cannot write rows.
+
+## Weekly CSV Backup in Google Drive
+
+The weekly backup exports the current Google Sheet tab to a UTF-8 CSV file and saves it in a Google Drive folder. This protects submitted lead data outside the live Sheet and gives you a dated file that can be opened in Excel or restored manually if needed.
+
+Backup script location:
+
+```text
+scripts/google-sheets-weekly-backup.gs
+```
+
+The script is designed for Google Apps Script attached to the Google Sheet. It runs every Monday at 01:00 Asia/Bangkok after you create the trigger.
+
+1. In Google Drive, create a folder for backups, for example `Nest Modern Design Lead Backups`.
+2. Open that folder and copy the folder ID from the URL. In `https://drive.google.com/drive/folders/FOLDER_ID_HERE`, the last part is `BACKUP_FOLDER_ID`.
+3. Open the Google Sheet that receives leads.
+4. Go to `Extensions > Apps Script`.
+5. Paste the contents of `scripts/google-sheets-weekly-backup.gs` into the Apps Script editor.
+6. Set the configuration values near the top:
+
+```javascript
+const CONFIG = {
+  SPREADSHEET_ID: "YOUR_SPREADSHEET_ID",
+  SHEET_NAME: "Leads",
+  BACKUP_FOLDER_ID: "YOUR_GOOGLE_DRIVE_BACKUP_FOLDER_ID",
+  TIMEZONE: "Asia/Bangkok",
+};
+```
+
+Configuration notes:
+
+- `SPREADSHEET_ID` is the long ID in the Google Sheet URL.
+- `SHEET_NAME` must match the Sheet tab name, for example `Leads`.
+- `BACKUP_FOLDER_ID` is the Google Drive folder ID copied above.
+- `TIMEZONE` should stay `Asia/Bangkok` unless the business reporting timezone changes.
+
+Manual test:
+
+1. In Apps Script, select `testWeeklyBackupNow`.
+2. Click `Run`.
+3. Authorize the script when Google prompts for Spreadsheet and Drive permissions.
+4. Open the backup folder and verify a CSV file appears with a name like `nest-modern-design-leads-weekly-backup-2026-06-01.csv`.
+
+Create the weekly trigger:
+
+1. In Apps Script, select `createWeeklyBackupTrigger`.
+2. Click `Run`.
+3. The script deletes existing triggers for `backupLeadsToCsvWeekly` before creating a new Monday 01:00 trigger, so duplicate weekly backup triggers are avoided.
+
+Delete backup triggers:
+
+1. In Apps Script, select `deleteWeeklyBackupTriggers`.
+2. Click `Run`.
+3. Existing triggers for `backupLeadsToCsvWeekly` are removed. Existing CSV backup files in Google Drive are not deleted.
 
 ## Netlify Environment Variables
 
