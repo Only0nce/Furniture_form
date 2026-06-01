@@ -2,9 +2,9 @@
 
 /* Config section */
 const CONFIG = {
-  // Public Netlify Function route. Keep backend credentials inside Netlify
-  // Environment Variables, never in this browser-visible file.
-  SUBMIT_ENDPOINT: "/.netlify/functions/submit-lead",
+  // Public Google Apps Script Web App URL. Keep spreadsheet IDs, sheet names,
+  // credentials, and row mapping inside Apps Script, never in this file.
+  SUBMIT_ENDPOINT: "https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec",
   STORAGE_KEYS: {
     language: "furnitureLeadForm.language",
     theme: "furnitureLeadForm.theme",
@@ -538,12 +538,14 @@ function cleanValue(value) {
   return String(value || "").trim();
 }
 
-/* Netlify Function submission */
+/* Lead submission */
 async function submitLead(payload) {
   const response = await fetch(CONFIG.SUBMIT_ENDPOINT, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      // Apps Script Web Apps do not handle browser CORS preflight requests.
+      // The body is still JSON; text/plain keeps this request simple.
+      "Content-Type": "text/plain;charset=utf-8",
     },
     body: JSON.stringify(payload),
   });

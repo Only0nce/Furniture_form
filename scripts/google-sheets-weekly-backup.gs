@@ -1,4 +1,4 @@
-const CONFIG = {
+const BACKUP_CONFIG = {
   SPREADSHEET_ID: "YOUR_SPREADSHEET_ID",
   SHEET_NAME: "Leads",
   BACKUP_FOLDER_ID: "YOUR_GOOGLE_DRIVE_BACKUP_FOLDER_ID",
@@ -10,17 +10,17 @@ const BACKUP_FILE_PREFIX = "nest-modern-design-leads-weekly-backup";
 const UTF8_BOM = "\uFEFF";
 
 function backupLeadsToCsvWeekly() {
-  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  const sheet = spreadsheet.getSheetByName(CONFIG.SHEET_NAME);
+  const spreadsheet = SpreadsheetApp.openById(BACKUP_CONFIG.SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(BACKUP_CONFIG.SHEET_NAME);
 
   if (!sheet) {
-    throw new Error(`Sheet not found: ${CONFIG.SHEET_NAME}`);
+    throw new Error(`Sheet not found: ${BACKUP_CONFIG.SHEET_NAME}`);
   }
 
   const values = getSheetValues_(sheet);
   const csv = UTF8_BOM + values.map(rowToCsvLine_).join("\r\n");
   const fileName = `${BACKUP_FILE_PREFIX}-${getBackupDate_()}.csv`;
-  const folder = DriveApp.getFolderById(CONFIG.BACKUP_FOLDER_ID);
+  const folder = DriveApp.getFolderById(BACKUP_CONFIG.BACKUP_FOLDER_ID);
   const blob = Utilities.newBlob(csv, "text/csv;charset=utf-8", fileName);
 
   return folder.createFile(blob);
@@ -37,7 +37,7 @@ function createWeeklyBackupTrigger() {
     .timeBased()
     .onWeekDay(ScriptApp.WeekDay.MONDAY)
     .atHour(1)
-    .inTimezone(CONFIG.TIMEZONE)
+    .inTimezone(BACKUP_CONFIG.TIMEZONE)
     .create();
 }
 
@@ -70,5 +70,5 @@ function valueToCsvCell_(value) {
 }
 
 function getBackupDate_() {
-  return Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "yyyy-MM-dd");
+  return Utilities.formatDate(new Date(), BACKUP_CONFIG.TIMEZONE, "yyyy-MM-dd");
 }
