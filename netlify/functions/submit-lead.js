@@ -11,6 +11,8 @@ const REQUIRED_ENV_VARS = [
 ];
 
 const REQUIRED_FIELDS = ["name", "phone"];
+const REMOVED_FIELDS = ["line", "instagram", "facebook"];
+const MAX_BODY_BYTES = 20 * 1024;
 
 // Keep this order aligned with the Google Sheets columns documented in README.md.
 const COLUMN_MAPPING = [
@@ -54,7 +56,7 @@ exports.handler = async function submitLead(event) {
 
     return jsonResponse(error.statusCode || 500, {
       success: false,
-      message: error.publicMessage || "Unable to save submission. Please try again.",
+      message: "Unable to save submission. Please try again.",
     });
   }
 };
@@ -65,8 +67,18 @@ function parseJsonBody(body) {
     throw publicError(400, "Unable to save submission. Please try again.");
   }
 
+  if (Buffer.byteLength(body, "utf8") > MAX_BODY_BYTES) {
+    throw publicError(413, "Unable to save submission. Please try again.");
+  }
+
   try {
-    return JSON.parse(body);
+    const payload = JSON.parse(body);
+
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error("Request body must be a JSON object.");
+    }
+
+    return payload;
   } catch (error) {
     throw publicError(400, "Unable to save submission. Please try again.");
   }
@@ -74,6 +86,12 @@ function parseJsonBody(body) {
 
 /* Validation */
 function validatePayload(payload) {
+  REMOVED_FIELDS.forEach((fieldName) => {
+    if (Object.prototype.hasOwnProperty.call(payload, fieldName)) {
+      throw publicError(400, "Unable to save submission. Please try again.");
+    }
+  });
+
   REQUIRED_FIELDS.forEach((fieldName) => {
     if (!cleanValue(payload[fieldName])) {
       throw publicError(400, "Please enter your name and phone number.");

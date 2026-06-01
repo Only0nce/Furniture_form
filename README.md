@@ -1,6 +1,6 @@
 # Furniture Customer Lead Form Website
 
-A responsive customer inquiry form for a furniture business. Customers scan a QR Code, open the website, submit contact details, and a Google Apps Script Web App validates and writes the lead to Google Sheets.
+A responsive customer inquiry form for a furniture business. Customers scan a QR Code, open the website, submit contact details, and a Netlify Function validates and writes the lead to Google Sheets through the Google Sheets API.
 
 ## File Structure
 
@@ -30,30 +30,31 @@ A responsive customer inquiry form for a furniture business. Customers scan a QR
 
 - `public/index.html`: Public page markup, language switcher, theme toggle, hero content, benefits, contact block, company footer, and customer form.
 - `public/style.css`: Responsive light/dark furniture-inspired UI styling.
-- `public/app.js`: Browser-safe UI validation, language/theme persistence, payload creation, and submission to the Google Apps Script Web App.
-- `scripts/lead-form-web-app.gs`: Google Apps Script Web App backend that validates requests, creates the header row when needed, maps fields to the latest Google Sheets columns, and appends leads.
+- `public/app.js`: Browser-safe UI validation, language/theme persistence, payload creation, and submission to the Netlify Function.
+- `netlify/functions/submit-lead.js`: Server-side Netlify Function that validates requests, maps fields to the latest Google Sheets columns, and appends leads through the Google Sheets API.
+- `scripts/lead-form-web-app.gs`: Legacy Google Apps Script Web App backend. Keep it for reference or manual testing only after Netlify Function submission is confirmed.
 - `scripts/google-sheets-weekly-backup.gs`: Google Apps Script for weekly CSV backups from Google Sheets to Google Drive.
-- `netlify.toml`: Safe Netlify static-site build configuration.
-- `package.json`: Node dependency configuration for local checks and the legacy Netlify Function.
+- `netlify.toml`: Safe Netlify static-site and function build configuration.
+- `package.json`: Node dependency configuration for local checks and `googleapis`.
 - `.gitignore`: Prevents credentials, local environment files, Netlify output, and dependencies from being committed.
 
 ## Frontend Setup
 
-Only files inside `public/` are served to website visitors. The frontend submits to this public Google Apps Script Web App endpoint:
+Only files inside `public/` are served to website visitors. The frontend submits to this public Netlify Function endpoint:
 
 ```javascript
-fetch("https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec", {
+fetch("/.netlify/functions/submit-lead", {
   method: "POST",
   headers: {
-    "Content-Type": "text/plain;charset=utf-8"
+    "Content-Type": "application/json"
   },
   body: JSON.stringify(payload)
 });
 ```
 
-The request body is still JSON. `text/plain;charset=utf-8` keeps the browser request simple so Google Apps Script does not need to answer a CORS preflight `OPTIONS` request.
+The Netlify Function then validates the payload and appends one row to Google Sheets using server-side environment variables.
 
-`public/app.js` must never contain Google Sheet IDs, sheet names, Google credentials, private keys, service account data, or Google Sheets column mapping. Browser JavaScript is always visible to users, so the real backend validation and spreadsheet write logic live in Apps Script.
+`public/app.js` must never contain Google Sheet IDs, sheet names, Google credentials, private keys, service account data, or Google Sheets API logic. Browser JavaScript is always visible to users, so the real backend validation and spreadsheet write logic live in the Netlify Function.
 
 Logo file path:
 
@@ -117,20 +118,16 @@ Removed fields:
 ## Google Sheets Setup
 
 1. Open the target Google Sheet.
-2. Use this spreadsheet ID only inside Apps Script, not in `public/app.js`:
+2. Copy the Spreadsheet ID from the Google Sheet URL and store it only in Netlify Environment Variables as `GOOGLE_SHEET_ID`, not in `public/app.js`.
 
-```text
-1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU
-```
-
-3. Rename the target tab to the same value set in `LEAD_FORM_CONFIG.SHEET_NAME` inside `scripts/lead-form-web-app.gs`, for example `Leads`.
+3. Rename the target tab to the same value set in `GOOGLE_SHEET_NAME`, for example `Leads`.
 4. Add this header row:
 
 ```text
 Timestamp | Language | Name | Phone | Email | Address | Interested Product | Budget | Message | Consent | User Agent | Source
 ```
 
-The Apps Script backend maps submitted values to this column order in `createLeadRow()` inside `scripts/lead-form-web-app.gs`. If the sheet is empty, `ensureHeaderRow(sheet)` creates this header row before the first append.
+The Netlify Function maps submitted values to this column order in `createLeadRow()` inside `netlify/functions/submit-lead.js`.
 
 Current Google Sheets columns:
 
@@ -151,42 +148,54 @@ Source
 
 New rows do not include Line, Instagram, or Facebook fields. If an older Google Sheet still has those columns, back up the sheet before manually removing old columns; the site and function do not delete existing Sheet data automatically.
 
-## Apps Script Backend Setup
+## Google Cloud Service Account Setup
 
-Use `scripts/lead-form-web-app.gs` as the full replacement backend code.
+The Netlify Function uses the Google Sheets API with a Google Cloud service account.
 
-1. Open the Google Sheet.
-2. Go to `Extensions > Apps Script`.
-3. Replace the Apps Script editor contents with `scripts/lead-form-web-app.gs`.
-4. Confirm this configuration at the top of the Apps Script file:
+1. Open Google Cloud Console.
+2. Create or select a project.
+3. Enable the `Google Sheets API`.
+4. Go to `IAM & Admin > Service Accounts`.
+5. Create a service account.
+6. Create a JSON key for that service account.
+7. From the JSON file, copy:
+   - `client_email`
+   - `private_key`
 
-```javascript
-const LEAD_FORM_CONFIG = {
-  SPREADSHEET_ID: "1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU",
-  SHEET_NAME: "Leads",
-};
-```
+Do not commit the JSON file. The repository ignores `service-account.json`.
 
-5. Save the Apps Script project.
-6. Select `testDoPost` and click `Run`.
-7. Authorize the script when Google prompts for Spreadsheet permissions.
-8. Confirm a test row appears in the `Leads` sheet.
-9. Deploy the script as a Web App:
+## Google Sheets Permission Setup
 
-```text
-Deploy > Manage deployments > Edit
-Select type: Web app
-Execute as: Me
-Who has access: Anyone or Anyone with the link
-Create a new version
-Deploy
-```
+1. Open your Google Sheet.
+2. Click `Share`.
+3. Paste the service account `client_email`.
+4. Give it `Editor` access.
+5. Save.
 
-10. Confirm the deployed `/exec` URL matches:
+Without this permission, the function can authenticate but cannot write rows.
+
+## Netlify Environment Variables
+
+In Netlify, open `Site settings > Environment variables` and add:
 
 ```text
-https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec
+GOOGLE_SHEET_ID=your_google_sheet_id
+GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
+GOOGLE_SHEET_NAME=Leads
 ```
+
+Notes:
+
+- `GOOGLE_SHEET_ID` is the long ID in the Google Sheet URL.
+- `GOOGLE_SHEET_NAME` must match the Sheet tab name, for example `Leads`.
+- `GOOGLE_PRIVATE_KEY` may contain escaped newline characters. The function converts `\n` back to real newline characters.
+- Do not store secrets in `netlify.toml`.
+- Do not commit `.env` files, service account JSON files, or private keys.
+
+## Legacy Apps Script Note
+
+The public frontend no longer submits directly to Google Apps Script. Keep `scripts/lead-form-web-app.gs` only if it is still useful for manual testing or historical reference. Do not delete old Apps Script code until Netlify Function submission is tested successfully. Do not delete existing Google Sheets data.
 
 ## Weekly CSV Backup in Google Drive
 
@@ -262,7 +271,11 @@ Run locally:
 npm run dev
 ```
 
-The form should call the Google Apps Script `/exec` endpoint configured in `public/app.js`.
+Netlify Dev serves the frontend and function together. The form should call:
+
+```text
+/.netlify/functions/submit-lead
+```
 
 ## Deployment
 
@@ -276,7 +289,7 @@ publish = "public"
 functions = "netlify/functions"
 ```
 
-4. No Google credentials or Spreadsheet ID are required in Netlify environment variables for the Apps Script backend.
+4. Add the required Google Sheets environment variables in Netlify.
 5. Deploy the site.
 
 ## Test Submission After Deploy
@@ -290,17 +303,17 @@ functions = "netlify/functions"
 
 If submission fails:
 
-- Confirm `public/app.js` uses the latest Apps Script `/exec` URL.
-- Confirm Apps Script was deployed as a new Web App version after code changes.
-- Confirm the Web App is set to execute as `Me`.
-- Confirm access is `Anyone` or `Anyone with the link`.
-- Confirm `LEAD_FORM_CONFIG.SHEET_NAME` matches the target tab name.
-- Run `testDoPost()` in Apps Script and authorize the project if prompted.
+- Confirm `public/app.js` submits to `/.netlify/functions/submit-lead`.
+- Confirm all Netlify environment variables are set.
+- Confirm the Google Sheet is shared with the service account email as Editor.
+- Confirm `GOOGLE_PRIVATE_KEY` includes newline escapes as `\n`.
+- Confirm the Google Sheets API is enabled for the Google Cloud project.
+- Confirm `GOOGLE_SHEET_NAME` matches the target tab name.
 
 Manual endpoint test:
 
 ```bash
-curl -i -L "https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec" \
+curl -i -X POST "https://YOUR_NETLIFY_SITE.netlify.app/.netlify/functions/submit-lead" \
   -H "Content-Type: application/json" \
   -d '{
     "language":"th",
@@ -310,7 +323,7 @@ curl -i -L "https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZL
     "address":"",
     "interestedProduct":"Chair",
     "budget":"Need consultation",
-    "message":"Test message",
+    "message":"Netlify Function test",
     "consent":true,
     "userAgent":"curl-test",
     "source":"manual-test"
@@ -322,7 +335,7 @@ Expected response:
 ```json
 {
   "success": true,
-  "message": "Lead saved successfully."
+  "message": "Submission saved successfully."
 }
 ```
 
@@ -339,9 +352,9 @@ The customer-facing website must not show a visible QR Code section, QR Code moc
 ## Security
 
 - Frontend JavaScript can always be viewed in the browser. Do not try to hide `public/app.js`.
-- `public/app.js` may contain UI handling, basic user-friendly validation, loading state, success/error handling, and the public Apps Script endpoint.
-- `public/app.js` must not contain Spreadsheet IDs, sheet names, Google credentials, private keys, service account data, or Google Sheets column mapping.
-- Apps Script Web App source code is not served to normal website visitors.
-- Apps Script performs the real backend validation, creates the header row when needed, maps fields to the 12 Google Sheets columns, and appends rows.
+- `public/app.js` may contain UI handling, basic user-friendly validation, loading state, success/error handling, and the public Netlify Function endpoint.
+- `public/app.js` must not contain Spreadsheet IDs, sheet names, Google credentials, private keys, service account data, or Google Sheets API logic.
+- Netlify Functions run server-side and can safely read environment variables.
+- The Netlify Function performs the real backend validation, maps fields to the 12 Google Sheets columns, and appends rows.
 - Backend files must stay outside `public/`.
 - `.env`, `.env.*`, `service-account.json`, private keys, `node_modules/`, and `.netlify/` are ignored by git.

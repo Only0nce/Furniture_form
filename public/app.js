@@ -1,10 +1,9 @@
 "use strict";
 
 /* Config section */
+const API_ENDPOINT = "/.netlify/functions/submit-lead";
+
 const CONFIG = {
-  // Public Google Apps Script Web App URL. Keep spreadsheet IDs, sheet names,
-  // credentials, and row mapping inside Apps Script, never in this file.
-  SUBMIT_ENDPOINT: "https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec",
   STORAGE_KEYS: {
     language: "furnitureLeadForm.language",
     theme: "furnitureLeadForm.theme",
@@ -540,12 +539,10 @@ function cleanValue(value) {
 
 /* Lead submission */
 async function submitLead(payload) {
-  const response = await fetch(CONFIG.SUBMIT_ENDPOINT, {
+  const response = await fetch(API_ENDPOINT, {
     method: "POST",
     headers: {
-      // Apps Script Web Apps do not handle browser CORS preflight requests.
-      // The body is still JSON; text/plain keeps this request simple.
-      "Content-Type": "text/plain;charset=utf-8",
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
   });
