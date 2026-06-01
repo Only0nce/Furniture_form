@@ -113,8 +113,22 @@ Removed fields:
 
 ## Google Sheets Setup
 
-1. Create a new Google Sheet.
-2. Rename the tab to the same value you will set in `GOOGLE_SHEET_NAME`, for example `Leads`.
+Current target Google Sheet:
+
+```text
+https://docs.google.com/spreadsheets/d/1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU/edit?gid=1011615810#gid=1011615810
+```
+
+Use only this spreadsheet ID for `GOOGLE_SHEET_ID`:
+
+```text
+1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU
+```
+
+The `gid=1011615810` part identifies the selected Sheet tab in the browser URL. This project does not use the `gid` value directly; `GOOGLE_SHEET_NAME` must match the visible tab name at the bottom of Google Sheets, for example `Leads`.
+
+1. Open the Google Sheet above.
+2. Rename the target tab to the same value you will set in `GOOGLE_SHEET_NAME`, for example `Leads`.
 3. Add this header row:
 
 ```text
@@ -225,7 +239,7 @@ Delete backup triggers:
 In Netlify, open the site settings and add these environment variables:
 
 ```text
-GOOGLE_SHEET_ID=your_google_sheet_id
+GOOGLE_SHEET_ID=1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU
 GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
 GOOGLE_SHEET_NAME=Leads
@@ -233,7 +247,8 @@ GOOGLE_SHEET_NAME=Leads
 
 Notes:
 
-- `GOOGLE_SHEET_ID` is the long ID in the Google Sheet URL.
+- `GOOGLE_SHEET_ID` is the long ID between `/d/` and `/edit` in the Google Sheet URL. Do not paste the full URL here.
+- `GOOGLE_SHEET_NAME` is the visible tab name in Google Sheets, not the `gid` number from the URL.
 - `GOOGLE_PRIVATE_KEY` may contain escaped newline characters. The function converts `\n` back to real newline characters.
 - Do not store secrets in `netlify.toml`.
 - Do not commit `.env` files.
@@ -255,11 +270,19 @@ npm install -g netlify-cli
 Create a local `.env` file for testing only:
 
 ```text
-GOOGLE_SHEET_ID=your_google_sheet_id
+GOOGLE_SHEET_ID=1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU
 GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
 GOOGLE_SHEET_NAME=Leads
 ```
+
+You can start from the included template:
+
+```bash
+cp .env.example .env
+```
+
+Then replace `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_PRIVATE_KEY` with the real values from the Google Cloud service account JSON. Keep `GOOGLE_SHEET_NAME=Leads` only if the target Google Sheets tab is actually named `Leads`.
 
 Run locally:
 
