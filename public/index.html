@@ -98,6 +98,12 @@
           </div>
 
           <form id="lead-form" class="lead-form" novalidate>
+            <div class="honeypot-field" aria-hidden="true">
+              <label for="website">Website</label>
+              <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+            <input id="formStartedAt" name="formStartedAt" type="hidden">
+
             <div class="form-grid">
               <div class="form-field">
                 <label for="name"><span data-i18n="nameLabel">Name</span> <span aria-hidden="true">*</span></label>
