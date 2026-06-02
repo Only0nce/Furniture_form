@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
   <a class="skip-link" href="#lead-form" data-i18n="skipToForm">Skip to form</a>
@@ -155,6 +156,11 @@
               </label>
               <p class="privacy-note" data-i18n="privacyNote">Your information is used only for customer contact and furniture inquiry follow-up.</p>
               <p class="field-error" id="consent-error" aria-live="polite"></p>
+            </div>
+
+            <div class="turnstile-group">
+              <div id="turnstile-widget" class="cf-turnstile" data-sitekey="0x4AAAAAADdUJLV7lLX-H3QR" tabindex="-1"></div>
+              <p class="field-error" id="turnstile-error" aria-live="polite"></p>
             </div>
 
             <div class="form-actions">

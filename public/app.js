@@ -127,6 +127,8 @@ const translations = {
       email: "Please enter a valid email address.",
       phone: "Please enter a valid phone number.",
       consent: "Please confirm your consent before submitting.",
+      verification: "Please complete verification.",
+      verificationFailed: "Verification failed. Please try again.",
     },
   },
   th: {
@@ -204,6 +206,8 @@ const translations = {
       email: "กรุณากรอกอีเมลให้ถูกต้อง",
       phone: "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง",
       consent: "กรุณายืนยันความยินยอมก่อนส่งข้อมูล",
+      verification: "กรุณายืนยันตัวตนก่อนส่งข้อมูล",
+      verificationFailed: "ยืนยันตัวตนไม่สำเร็จ กรุณาลองอีกครั้ง",
     },
   },
   zh: {
@@ -281,6 +285,8 @@ const translations = {
       email: "请输入有效的电子邮件地址。",
       phone: "请输入有效的电话号码。",
       consent: "提交前请确认你的同意。",
+      verification: "请先完成验证。",
+      verificationFailed: "验证失败。请重试。",
     },
   },
 };
@@ -318,6 +324,8 @@ const dom = {
   formStatus: document.getElementById("form-status"),
   productSelect: document.getElementById("interestedProduct"),
   budgetSelect: document.getElementById("budget"),
+  turnstileContainer: document.getElementById("turnstile-widget"),
+  turnstileError: document.getElementById("turnstile-error"),
 };
 
 let currentLanguage = CONFIG.DEFAULT_LANGUAGE;
@@ -341,6 +349,40 @@ function setFormStartedAt() {
   const startedInput = document.getElementById("formStartedAt");
   if (startedInput) {
     startedInput.value = String(Date.now());
+  }
+}
+
+function isTurnstileEnabled() {
+  return Boolean(dom.turnstileContainer);
+}
+
+function setTurnstileError(message) {
+  if (dom.turnstileContainer) {
+    dom.turnstileContainer.setAttribute("aria-invalid", "true");
+  }
+
+  if (dom.turnstileError) {
+    dom.turnstileError.textContent = message;
+  }
+}
+
+function clearTurnstileError() {
+  if (dom.turnstileContainer) {
+    dom.turnstileContainer.removeAttribute("aria-invalid");
+  }
+
+  if (dom.turnstileError) {
+    dom.turnstileError.textContent = "";
+  }
+}
+
+function resetTurnstile() {
+  if (!isTurnstileEnabled()) {
+    return;
+  }
+
+  if (window.turnstile) {
+    window.turnstile.reset();
   }
 }
 
@@ -480,6 +522,11 @@ function validateForm() {
     isValid = false;
   }
 
+  if (isTurnstileEnabled() && !getTurnstileResponse(formData)) {
+    setTurnstileError(t("validation.verification"));
+    isValid = false;
+  }
+
   if (!isValid) {
     focusFirstInvalidField();
   }
@@ -493,6 +540,10 @@ function isValidEmail(value) {
 
 function isValidPhone(value) {
   return /^[0-9+\-()\s]{7,20}$/.test(value);
+}
+
+function getTurnstileResponse(formData) {
+  return cleanValue(formData.get("cf-turnstile-response"));
 }
 
 function setFieldError(field, message) {
@@ -514,12 +565,19 @@ function clearValidationErrors() {
   dom.form.querySelectorAll(".field-error").forEach((errorElement) => {
     errorElement.textContent = "";
   });
+
+  clearTurnstileError();
 }
 
 function focusFirstInvalidField() {
   const invalidField = dom.form.querySelector(".is-invalid");
   if (invalidField) {
     invalidField.focus({ preventScroll: false });
+    return;
+  }
+
+  if (dom.turnstileContainer && dom.turnstileContainer.getAttribute("aria-invalid") === "true") {
+    dom.turnstileContainer.focus({ preventScroll: false });
   }
 }
 
@@ -539,6 +597,7 @@ function createPayload() {
     consent: dom.form.elements.consent.checked,
     website: cleanValue(formData.get("website")),
     formStartedAt: cleanValue(formData.get("formStartedAt")),
+    turnstileToken: getTurnstileResponse(formData),
     userAgent: navigator.userAgent,
     source: window.location.href,
   };
@@ -620,8 +679,10 @@ async function handleFormSubmit(event) {
     await submitLead(payload);
     setFormStatus(t("successMessage"), "success");
     resetFormAfterSuccess();
+    resetTurnstile();
   } catch (error) {
     setFormStatus(error.message || t("errorMessage"), "error");
+    resetTurnstile();
   } finally {
     setSubmittingState(false);
   }

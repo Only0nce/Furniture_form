@@ -1,6 +1,15 @@
-const LEAD_FORM_CONFIG = {
+const CONFIG = {
   SPREADSHEET_ID: "1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU",
   SHEET_NAME: "Leads",
+  CHECK_HEADER_ON_EVERY_SUBMIT: false,
+  MIN_SUBMIT_SECONDS: 3,
+  SAME_PHONE_COOLDOWN_SECONDS: 60,
+  MAX_REQUEST_BODY_LENGTH: 8000,
+  TURNSTILE_ENABLED: true,
+  TURNSTILE_REQUIRED: true,
+  TURNSTILE_SECRET_KEY: "",
+  TURNSTILE_SECRET_PROPERTY_NAME: "TURNSTILE_SECRET_KEY",
+  TURNSTILE_VERIFY_URL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
 };
 
 const COLUMN_MAPPING = [
@@ -31,6 +40,7 @@ const ALLOWED_FIELDS = [
   "consent",
   "website",
   "formStartedAt",
+  "turnstileToken",
   "userAgent",
   "source",
 ];
@@ -46,13 +56,12 @@ const FIELD_LIMITS = {
   message: 1000,
   website: 100,
   formStartedAt: 30,
+  turnstileToken: 3000,
   userAgent: 300,
   source: 500,
 };
 
 const ALLOWED_LANGUAGES = ["th", "en", "zh"];
-const MIN_SUBMIT_SECONDS = 3;
-const SAME_PHONE_COOLDOWN_SECONDS = 60;
 
 function doGet() {
   return createJsonResponse({
@@ -62,19 +71,23 @@ function doGet() {
 }
 
 function doPost(e) {
+  let duplicateCacheKey = "";
+
   try {
     const payload = parseRequestBody(e);
-    validatePayload(payload);
+    const validation = validatePayload(payload);
 
+    duplicateCacheKey = checkDuplicateCooldown(validation.normalizedPhone);
+    verifyTurnstile(payload.turnstileToken);
     const sheet = getLeadSheet();
-    ensureHeaderRow(sheet);
-    sheet.appendRow(createLeadRow(payload));
+    appendLeadRow(sheet, createLeadRow(payload));
 
     return createJsonResponse({
       success: true,
       message: "Lead saved successfully.",
     });
   } catch (error) {
+    releaseDuplicateCooldown(duplicateCacheKey);
     console.error("Lead submission failed:", error);
 
     return createJsonResponse({
@@ -89,14 +102,12 @@ function parseRequestBody(e) {
     throw publicError("Unable to save submission. Please try again.");
   }
 
+  if (e.postData.contents.length > CONFIG.MAX_REQUEST_BODY_LENGTH) {
+    throw publicError("Unable to save submission. Please try again.");
+  }
+
   try {
-    const payload = JSON.parse(e.postData.contents);
-
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      throw new Error("Request body must be a JSON object.");
-    }
-
-    return payload;
+    return JSON.parse(e.postData.contents);
   } catch (error) {
     throw publicError("Unable to save submission. Please try again.");
   }
@@ -139,7 +150,9 @@ function validatePayload(payload) {
     throw new Error("Invalid language.");
   }
 
-  checkDuplicateCooldown(payload.phone);
+  return {
+    normalizedPhone: normalizePhone(payload.phone),
+  };
 }
 
 function rejectUnknownFields(payload) {
@@ -169,7 +182,7 @@ function validateSubmitTime(formStartedAt) {
 
   const elapsedMs = Date.now() - startedAt;
 
-  if (elapsedMs < MIN_SUBMIT_SECONDS * 1000) {
+  if (elapsedMs < CONFIG.MIN_SUBMIT_SECONDS * 1000) {
     throw new Error("Please wait before submitting.");
   }
 
@@ -178,21 +191,98 @@ function validateSubmitTime(formStartedAt) {
   }
 }
 
-function checkDuplicateCooldown(phone) {
-  const normalizedPhone = cleanValue(phone).replace(/\D/g, "");
-
+function checkDuplicateCooldown(normalizedPhone) {
   if (!normalizedPhone) {
     throw new Error("Phone format is invalid.");
   }
 
   const cache = CacheService.getScriptCache();
-  const cacheKey = "phone_submit_" + normalizedPhone;
+  const cacheKey = getDuplicateCacheKey(normalizedPhone);
 
   if (cache.get(cacheKey)) {
     throw new Error("Please wait before submitting again.");
   }
 
-  cache.put(cacheKey, "1", SAME_PHONE_COOLDOWN_SECONDS);
+  cache.put(cacheKey, "1", CONFIG.SAME_PHONE_COOLDOWN_SECONDS);
+  return cacheKey;
+}
+
+function releaseDuplicateCooldown(cacheKey) {
+  if (!cacheKey) {
+    return;
+  }
+
+  try {
+    CacheService.getScriptCache().remove(cacheKey);
+  } catch (error) {
+    console.error("Unable to release duplicate cooldown:", error);
+  }
+}
+
+function getDuplicateCacheKey(normalizedPhone) {
+  return "submit_phone_" + normalizedPhone;
+}
+
+function normalizePhone(value) {
+  return cleanValue(value).replace(/\D/g, "");
+}
+
+function verifyTurnstile(token) {
+  if (!shouldVerifyTurnstile()) {
+    return;
+  }
+
+  const secretKey = getTurnstileSecretKey();
+
+  if (!secretKey) {
+    throw new Error("Turnstile secret key is not configured.");
+  }
+
+  const cleanedToken = cleanValue(token);
+
+  if (!cleanedToken) {
+    throw publicError("Please complete verification.");
+  }
+
+  let response;
+  try {
+    response = UrlFetchApp.fetch(CONFIG.TURNSTILE_VERIFY_URL, {
+      method: "post",
+      payload: {
+        secret: secretKey,
+        response: cleanedToken,
+      },
+      muteHttpExceptions: true,
+    });
+  } catch (error) {
+    console.error("Turnstile verification request failed:", error);
+    throw publicError("Verification failed. Please try again.");
+  }
+
+  let result = {};
+  try {
+    result = JSON.parse(response.getContentText() || "{}");
+  } catch (error) {
+    console.error("Turnstile verification response was not valid JSON:", error);
+  }
+
+  if (response.getResponseCode() !== 200 || result.success !== true) {
+    throw publicError("Verification failed. Please try again.");
+  }
+}
+
+function shouldVerifyTurnstile() {
+  return CONFIG.TURNSTILE_ENABLED || CONFIG.TURNSTILE_REQUIRED || Boolean(cleanValue(CONFIG.TURNSTILE_SECRET_KEY));
+}
+
+function getTurnstileSecretKey() {
+  const inlineSecret = cleanValue(CONFIG.TURNSTILE_SECRET_KEY);
+
+  if (inlineSecret) {
+    return inlineSecret;
+  }
+
+  return cleanValue(PropertiesService.getScriptProperties().getProperty(CONFIG.TURNSTILE_SECRET_PROPERTY_NAME));
 }
 
 function isValidEmail(value) {
@@ -204,14 +294,29 @@ function isValidPhone(value) {
 }
 
 function getLeadSheet() {
-  const spreadsheet = SpreadsheetApp.openById(LEAD_FORM_CONFIG.SPREADSHEET_ID);
-  let sheet = spreadsheet.getSheetByName(LEAD_FORM_CONFIG.SHEET_NAME);
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(CONFIG.SHEET_NAME);
 
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(LEAD_FORM_CONFIG.SHEET_NAME);
+    sheet = spreadsheet.insertSheet(CONFIG.SHEET_NAME);
   }
 
   return sheet;
+}
+
+function appendLeadRow(sheet, row) {
+  const lock = LockService.getScriptLock();
+
+  lock.waitLock(5000);
+  try {
+    if (CONFIG.CHECK_HEADER_ON_EVERY_SUBMIT) {
+      ensureHeaderRow(sheet);
+    }
+
+    sheet.appendRow(row);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function ensureHeaderRow(sheet) {
@@ -289,6 +394,7 @@ function testDoPost() {
         consent: true,
         website: "",
         formStartedAt: String(Date.now() - 5000),
+        turnstileToken: "",
         userAgent: "apps-script-test",
         source: "manual-test",
       }),
@@ -297,3 +403,8 @@ function testDoPost() {
 
   return doPost(event);
 }
+
+
+/*
+https://script.google.com/macros/s/AKfycbzAF9DB96PZdy6y8_w8SSb-5T5SoXw4STXcf40sV-qaCrsaAXL4_YmYmYS8pcrQoGNkyA/exec
+*/

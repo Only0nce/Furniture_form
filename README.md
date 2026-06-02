@@ -31,7 +31,7 @@ A responsive customer inquiry form for a furniture business. Customers scan a QR
 - `public/index.html`: Public page markup, language switcher, theme toggle, hero content, benefits, contact block, company footer, and customer form.
 - `public/style.css`: Responsive light/dark furniture-inspired UI styling.
 - `public/app.js`: Browser-safe UI validation, language/theme persistence, payload creation, and submission to the Google Apps Script Web App.
-- `scripts/lead-form-web-app.gs`: Google Apps Script Web App backend that validates requests, creates the header row when needed, maps fields to the latest Google Sheets columns, and appends leads.
+- `scripts/lead-form-web-app.gs`: Google Apps Script Web App backend that validates requests, verifies Cloudflare Turnstile, maps fields to the latest Google Sheets columns, and appends leads.
 - `scripts/google-sheets-weekly-backup.gs`: Google Apps Script for weekly CSV backups from Google Sheets to Google Drive.
 - `netlify.toml`: Safe Netlify static-site build configuration.
 - `package.json`: Node dependency configuration for local checks and the legacy Netlify Function.
@@ -42,7 +42,7 @@ A responsive customer inquiry form for a furniture business. Customers scan a QR
 Only files inside `public/` are served to website visitors. The frontend submits to this public Google Apps Script Web App endpoint:
 
 ```javascript
-fetch("https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec", {
+fetch("https://script.google.com/macros/s/AKfycbwE-4ztZy39OS86U6emWKAp2puhCVFkgtf-x0AOh5KM938U9G0JcufTS77ZnsbwLKIoQQ/exec", {
   method: "POST",
   headers: {
     "Content-Type": "text/plain;charset=utf-8"
@@ -123,14 +123,14 @@ Removed fields:
 1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU
 ```
 
-3. Rename the target tab to the same value set in `LEAD_FORM_CONFIG.SHEET_NAME` inside `scripts/lead-form-web-app.gs`, for example `Leads`.
-4. Add this header row:
+3. Rename the target tab to the same value set in `CONFIG.SHEET_NAME` inside `scripts/lead-form-web-app.gs`, for example `Leads`.
+4. Add this header row manually, or run `setupHeader()` from Apps Script after pasting the backend code:
 
 ```text
 Timestamp | Language | Name | Phone | Email | Address | Interested Product | Budget | Message | Consent | User Agent | Source
 ```
 
-The Apps Script backend maps submitted values to this column order in `createLeadRow()` inside `scripts/lead-form-web-app.gs`. If the sheet is empty, `ensureHeaderRow(sheet)` creates this header row before the first append.
+The Apps Script backend maps submitted values to this column order in `createLeadRow()` inside `scripts/lead-form-web-app.gs`. For lower production resource use, `CONFIG.CHECK_HEADER_ON_EVERY_SUBMIT` defaults to `false`, so normal submissions append directly and do not read the Sheet just to check headers.
 
 Current Google Sheets columns:
 
@@ -161,16 +161,24 @@ Use `scripts/lead-form-web-app.gs` as the full replacement backend code.
 4. Confirm this configuration at the top of the Apps Script file:
 
 ```javascript
-const LEAD_FORM_CONFIG = {
+const CONFIG = {
   SPREADSHEET_ID: "1vQ8s5UKh34ZcSosbOUQTZG-IoblIspb5UpxE6KEzPaU",
   SHEET_NAME: "Leads",
+  CHECK_HEADER_ON_EVERY_SUBMIT: false,
+  MIN_SUBMIT_SECONDS: 3,
+  SAME_PHONE_COOLDOWN_SECONDS: 60,
+  MAX_REQUEST_BODY_LENGTH: 8000,
+  TURNSTILE_ENABLED: true,
+  TURNSTILE_REQUIRED: true,
+  TURNSTILE_SECRET_KEY: "",
+  TURNSTILE_SECRET_PROPERTY_NAME: "TURNSTILE_SECRET_KEY"
 };
 ```
 
 5. Save the Apps Script project.
-6. Select `testDoPost` and click `Run`.
+6. Select `setupHeader` and click `Run` to create or refresh the header row.
 7. Authorize the script when Google prompts for Spreadsheet permissions.
-8. Confirm a test row appears in the `Leads` sheet.
+8. Add the `TURNSTILE_SECRET_KEY` script property before testing submissions.
 9. Deploy the script as a Web App:
 
 ```text
@@ -185,8 +193,38 @@ Deploy
 10. Confirm the deployed `/exec` URL matches:
 
 ```text
-https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec
+https://script.google.com/macros/s/AKfycbwE-4ztZy39OS86U6emWKAp2puhCVFkgtf-x0AOh5KM938U9G0JcufTS77ZnsbwLKIoQQ/exec
 ```
+
+## Cloudflare Turnstile Setup
+
+Turnstile is enabled in the frontend and backend. The public site key is in `public/index.html`; the private secret key must be stored only in Google Apps Script.
+
+1. Create a Cloudflare Turnstile widget for the deployed website domain.
+2. Confirm `public/index.html` uses the public site key in the `.cf-turnstile` element.
+3. In Apps Script, open `Project Settings > Script properties` and add `TURNSTILE_SECRET_KEY` with the Cloudflare secret key.
+4. Leave `CONFIG.TURNSTILE_SECRET_KEY` empty unless you intentionally manage the secret inside Apps Script. Do not commit a real secret key to this repository.
+5. Save Apps Script and deploy a new Web App version.
+
+When `CONFIG.TURNSTILE_ENABLED` is `true`, Apps Script verifies `turnstileToken` only after JSON parsing, local validation, honeypot rejection, submit-time checks, phone validation, consent validation, language validation, and duplicate cooldown checks pass. Invalid local submissions do not call Cloudflare.
+
+If Turnstile is enabled but no secret key is available, Apps Script returns a generic failure and does not open Google Sheets.
+
+If Turnstile is enabled, `testDoPost()` with a fake token will fail verification. Use the live page for end-to-end Turnstile testing, or temporarily test backend validation before adding the secret key.
+
+## Performance and Quota Optimization
+
+Apps Script has execution, service, and URL fetch quotas, so normal submissions are ordered to avoid expensive work until cheaper checks pass.
+
+- `doGet()` returns a simple health response and does not access `SpreadsheetApp`.
+- `doPost()` rejects missing, invalid, or oversized bodies before validation work.
+- Unknown fields, length limits, honeypot, `formStartedAt`, required fields, phone, email, consent, and language are validated before any Cloudflare or Google Sheets calls.
+- Duplicate cooldown uses `CacheService` with `submit_phone_NORMALIZED_PHONE` for 60 seconds and stores only a flag, not customer details.
+- Cloudflare Turnstile verification runs only when enabled and only after cheap local checks and the duplicate cooldown check pass.
+- `SpreadsheetApp.openById()` runs only after validation succeeds and, when enabled, Turnstile verification succeeds.
+- `CONFIG.CHECK_HEADER_ON_EVERY_SUBMIT` defaults to `false`; run `setupHeader()` manually during setup or after changing columns.
+- Normal submissions append one row, do not read the full Sheet, do not scan rows for duplicates, and do not migrate or delete old columns.
+- `LockService` is used only around the final optional header check and `appendRow()` step, keeping the lock duration short.
 
 ## Weekly CSV Backup in Google Drive
 
@@ -294,14 +332,16 @@ If submission fails:
 - Confirm Apps Script was deployed as a new Web App version after code changes.
 - Confirm the Web App is set to execute as `Me`.
 - Confirm access is `Anyone` or `Anyone with the link`.
-- Confirm `LEAD_FORM_CONFIG.SHEET_NAME` matches the target tab name.
+- Confirm `CONFIG.SHEET_NAME` matches the target tab name.
 - Run `testDoPost()` in Apps Script and authorize the project if prompted.
 
 Manual endpoint test:
 
 ```bash
-curl -i -L "https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZLFlVoPsGN2llky23-s7K2GBX37f_U2a1uBXrcsBuvg/exec" \
-  -H "Content-Type: application/json" \
+FORM_STARTED_AT="$(($(date +%s%3N) - 5000))"
+
+curl -i -L "https://script.google.com/macros/s/AKfycbwE-4ztZy39OS86U6emWKAp2puhCVFkgtf-x0AOh5KM938U9G0JcufTS77ZnsbwLKIoQQ/exec" \
+  -H "Content-Type: text/plain;charset=utf-8" \
   -d '{
     "language":"th",
     "name":"Test Customer",
@@ -312,10 +352,15 @@ curl -i -L "https://script.google.com/macros/s/AKfycbzdniAMQ6F0Rr4_zWPygpUwRZTZL
     "budget":"Need consultation",
     "message":"Test message",
     "consent":true,
+    "website":"",
+    "formStartedAt":"'"${FORM_STARTED_AT}"'",
+    "turnstileToken":"PASTE_FRESH_TURNSTILE_TOKEN_FROM_LIVE_PAGE",
     "userAgent":"curl-test",
     "source":"manual-test"
   }'
 ```
+
+This manual endpoint test requires a fresh Turnstile token generated by the live page because backend verification is enabled.
 
 Expected response:
 
@@ -342,6 +387,6 @@ The customer-facing website must not show a visible QR Code section, QR Code moc
 - `public/app.js` may contain UI handling, basic user-friendly validation, loading state, success/error handling, and the public Apps Script endpoint.
 - `public/app.js` must not contain Spreadsheet IDs, sheet names, Google credentials, private keys, service account data, or Google Sheets column mapping.
 - Apps Script Web App source code is not served to normal website visitors.
-- Apps Script performs the real backend validation, creates the header row when needed, maps fields to the 12 Google Sheets columns, and appends rows.
+- Apps Script performs the real backend validation, Turnstile verification, duplicate cooldown checks, column mapping, and row append.
 - Backend files must stay outside `public/`.
 - `.env`, `.env.*`, `service-account.json`, private keys, `node_modules/`, and `.netlify/` are ignored by git.
